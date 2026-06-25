@@ -8,20 +8,76 @@ import { supabase } from "@/lib/supabase";
 export const dynamic = "force-dynamic";
 
 const categories = [
-  "PCR Reagents",
-  "qPCR Reagents",
-  "Primers & Probes",
-  "DNA/RNA Extraction",
-  "Electrophoresis Consumables",
-  "Cloning & Transformation",
-  "Sequencing & NGS",
-  "Cell Culture & Tissue Engineering",
-  "Immunology & Protein Analysis",
-  "Plasticware",
-  "Standards & Controls",
-  "Agricultural Biotechnology",
-  "Equipment",
-  "Others"
+  {
+    name: "PCR Reagents",
+    image: "/images/category-pcr.png",
+    description: "PCR mixes, enzymes, buffers, tubes, and related reagents.",
+  },
+  {
+    name: "qPCR Reagents",
+    image: "/images/category-pcr.png",
+    description: "qPCR master mixes, probes, dyes, controls, and kits.",
+  },
+  {
+    name: "Primers & Probes",
+    image: "/images/category-primers.png",
+    description: "Primers, probes, oligos, and molecular detection materials.",
+  },
+  {
+    name: "DNA/RNA Extraction",
+    image: "/images/category-extraction.png",
+    description: "Extraction kits, columns, buffers, and purification supplies.",
+  },
+  {
+    name: "Electrophoresis Consumables",
+    image: "/images/category-plasticware.png",
+    description: "Gels, ladders, buffers, loading dyes, and gel accessories.",
+  },
+  {
+    name: "Cloning & Transformation",
+    image: "/images/category-cell-culture.png",
+    description: "Cloning kits, competent cells, vectors, and transformation items.",
+  },
+  {
+    name: "Sequencing & NGS",
+    image: "/images/category-extraction.png",
+    description: "Sequencing kits, NGS library materials, and related supplies.",
+  },
+  {
+    name: "Cell Culture & Tissue Engineering",
+    image: "/images/category-cell-culture.png",
+    description: "Culture plates, media, flasks, supplements, and cell culture tools.",
+  },
+  {
+    name: "Immunology & Protein Analysis",
+    image: "/images/category-antibodies.png",
+    description: "Antibodies, ELISA materials, protein assays, and immunology tools.",
+  },
+  {
+    name: "Plasticware",
+    image: "/images/category-plasticware.png",
+    description: "Tubes, tips, plates, bottles, and general lab plasticware.",
+  },
+  {
+    name: "Standards & Controls",
+    image: "/images/product-placeholder.png",
+    description: "Reference standards, controls, calibrators, and quality materials.",
+  },
+  {
+    name: "Agricultural Biotechnology",
+    image: "/images/category-primers.png",
+    description: "Plant biotech, crop testing, agricultural molecular biology supplies.",
+  },
+  {
+    name: "Equipment",
+    image: "/images/seller-lab-supply.png",
+    description: "Reviewed lab devices, small equipment, and verified used instruments.",
+  },
+  {
+    name: "Others",
+    image: "/images/product-placeholder.png",
+    description: "Other approved laboratory and research supplies.",
+  },
 ];
 
 type PublicListing = {
@@ -121,27 +177,53 @@ export default async function Home() {
         </div>
       </section>
 
-      <section id="categories" className="mx-auto max-w-7xl px-6 py-10">
-        <div className="mb-5 flex items-center justify-between">
-          <h2 className="text-2xl font-black">Shop by Category</h2>
+      <section id="categories" className="mx-auto max-w-7xl px-6 py-12">
+        <div className="mb-6 flex items-center justify-between gap-4">
+          <div>
+            <p className="mb-2 text-sm font-black uppercase tracking-wide text-emerald-700">
+              Explore categories
+            </p>
+
+            <h2 className="text-3xl font-black">Shop by Category</h2>
+          </div>
 
           <a href="#listings" className="font-bold text-emerald-700">
             View listings →
           </a>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+        <div className="grid gap-5 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
           {categories.map((category) => (
-            <div
-              key={category}
-              className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
+            <a
+              key={category.name}
+              href="#listings"
+              className="group overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:border-emerald-300 hover:shadow-xl"
             >
-              <h3 className="font-black">{category}</h3>
+              <div className="flex h-40 items-center justify-center bg-gradient-to-br from-emerald-50 to-slate-50 p-6">
+                <div className="relative h-28 w-28 transition duration-300 group-hover:scale-110">
+                  <Image
+                    src={category.image}
+                    alt={`${category.name} category icon`}
+                    fill
+                    className="object-contain"
+                  />
+                </div>
+              </div>
 
-              <p className="mt-2 text-sm leading-6 text-slate-600">
-                Browse approved LabFinds listings related to {category}.
-              </p>
-            </div>
+              <div className="p-5">
+                <h3 className="text-lg font-black leading-6 text-slate-950">
+                  {category.name}
+                </h3>
+
+                <p className="mt-3 text-sm leading-6 text-slate-600">
+                  {category.description}
+                </p>
+
+                <p className="mt-5 text-sm font-black text-emerald-700">
+                  Browse {category.name} →
+                </p>
+              </div>
+            </a>
           ))}
         </div>
       </section>
