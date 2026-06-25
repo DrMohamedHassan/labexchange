@@ -1,4 +1,4 @@
-import Image from "next/image";
+﻿import Image from "next/image";
 import Link from "next/link";
 import Header from "@/components/Header";
 import CountryGate from "@/components/CountryGate";
@@ -32,6 +32,7 @@ type PublicListing = {
   country: string | null;
   city: string | null;
   price: number | string | null;
+  price_currency: string | null;
   image_url: string | null;
   product_image_url: string | null;
   status: string | null;
@@ -42,7 +43,7 @@ export default async function Home() {
   const { data, error } = await supabase
     .from("listings")
     .select(
-      "id, title, category, condition, country, city, price, image_url, product_image_url, status, sold_expires_at"
+      "id, title, category, condition, country, city, price, price_currency, image_url, product_image_url, status, sold_expires_at"
     )
     .in("status", ["approved", "sold"])
     .order("created_at", { ascending: false });
@@ -110,7 +111,7 @@ export default async function Home() {
           <div className="relative min-h-[280px] overflow-hidden rounded-[2rem] bg-slate-100 shadow-xl shadow-slate-200 md:min-h-[360px]">
             <Image
               src="/images/hero-lab.png"
-              alt="Laboratory marketplace"
+              alt="InterLab Hub laboratory marketplace"
               fill
               priority
               className="object-cover"
@@ -124,7 +125,7 @@ export default async function Home() {
           <h2 className="text-2xl font-black">Shop by Category</h2>
 
           <a href="#listings" className="font-bold text-emerald-700">
-            View listings â†’
+            View listings →
           </a>
         </div>
 
@@ -149,7 +150,7 @@ export default async function Home() {
           <h2 className="text-2xl font-black">Latest Listings</h2>
 
           <Link href="/add-listing" className="font-bold text-emerald-700">
-            Add listing â†’
+            Add listing →
           </Link>
         </div>
 
@@ -162,12 +163,13 @@ export default async function Home() {
                 key={listing.id}
                 id={listing.id}
                 title={listing.title || "Untitled listing"}
-                category={`${listing.category || "General"} Â· ${
+                category={`${listing.category || "General"} · ${
                   listing.country || "Country not set"
                 }`}
                 condition={listing.condition || "Condition not provided"}
                 city={listing.city || "City not provided"}
                 price={listing.price}
+                priceCurrency={listing.price_currency}
                 imageUrl={listing.product_image_url || listing.image_url}
                 status={listing.status || "approved"}
               />
@@ -220,11 +222,11 @@ export default async function Home() {
               <h3 className="font-black">Best for:</h3>
 
               <ul className="mt-4 grid gap-3 text-sm leading-6 text-slate-700">
-                <li>â€¢ Buyer or seller complaint</li>
-                <li>â€¢ Wrong country listing</li>
-                <li>â€¢ Fraud or safety concern</li>
-                <li>â€¢ Technical website problem</li>
-                <li>â€¢ Partnership or general enquiry</li>
+                <li>• Buyer or seller complaint</li>
+                <li>• Wrong country listing</li>
+                <li>• Fraud or safety concern</li>
+                <li>• Technical website problem</li>
+                <li>• Partnership or general enquiry</li>
               </ul>
             </div>
           </div>

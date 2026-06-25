@@ -3,6 +3,8 @@ import Header from "@/components/Header";
 import ReportListingBox from "@/components/ReportListingBox";
 import SellerReviewBox from "@/components/SellerReviewBox";
 import Link from "next/link";
+import { shouldShowArabicForCountry } from "@/lib/countries";
+import { formatPriceWithCurrency } from "@/lib/currencies";
 import { supabase } from "@/lib/supabase";
 
 export const dynamic = "force-dynamic";
@@ -39,7 +41,7 @@ export default async function ListingDetailsPage({
   const { data: listing, error } = await supabase
     .from("listings")
     .select(
-      "id, seller_id, title, brand, quantity, category, condition, country, city, price, expiry_date, storage_condition, description, seller_name, seller_phone, status, image_url, product_image_url, voucher_image_url, proof_image_url, used_verification_acknowledged, used_verification_notes"
+      "id, seller_id, title, brand, quantity, category, condition, country, city, price, price_currency, expiry_date, storage_condition, description, seller_name, seller_phone, status, image_url, product_image_url, product_figure_1_url, product_figure_2_url, product_figure_3_url, voucher_image_url, proof_image_url, used_verification_acknowledged, used_verification_notes"
     )
     .eq("id", listingId)
     .in("status", ["approved", "sold"])
@@ -48,6 +50,8 @@ export default async function ListingDetailsPage({
   if (error || !listing) {
     return <ListingNotFound />;
   }
+
+  const showArabic = shouldShowArabicForCountry(listing.country);
 
   let sellerProfile: SellerProfile | null = null;
 
@@ -82,6 +86,12 @@ export default async function ListingDetailsPage({
     listing.image_url ||
     "/images/product-placeholder.png";
 
+  const productFigures = [
+    listing.product_figure_1_url,
+    listing.product_figure_2_url,
+    listing.product_figure_3_url,
+  ].filter(Boolean) as string[];
+
   const whatsappLink = `https://wa.me/${listing.seller_phone || ""}`;
   const isSold = listing.status === "sold";
 
@@ -90,7 +100,6 @@ export default async function ListingDetailsPage({
     .startsWith("used");
 
   const isVerifiedSeller = Boolean(sellerProfile?.is_verified_seller);
-  const formattedPrice = formatPrice(listing.price);
 
   return (
     <main className="min-h-screen bg-slate-50 text-slate-950">
@@ -109,6 +118,13 @@ export default async function ListingDetailsPage({
               This advertisement is shown temporarily for transparency and
               buyer review.
             </p>
+
+            {showArabic && (
+              <p className="mt-2 text-sm">
+                هذا الإعلان ظاهر مؤقتًا بعد البيع للشفافية وإتاحة تقييم
+                المشتري.
+              </p>
+            )}
           </div>
         )}
 
@@ -133,6 +149,26 @@ export default async function ListingDetailsPage({
                 </div>
               )}
             </div>
+
+            {productFigures.length > 0 && (
+              <div className="grid gap-3 p-4 sm:grid-cols-3">
+                {productFigures.map((figureUrl, index) => (
+                  <a
+                    key={figureUrl}
+                    href={figureUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="block overflow-hidden rounded-2xl bg-slate-100"
+                  >
+                    <img
+                      src={figureUrl}
+                      alt={`Product figure ${index + 1}`}
+                      className="h-32 w-full object-cover transition hover:scale-105"
+                    />
+                  </a>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="rounded-3xl bg-white p-8 shadow-sm">
@@ -154,7 +190,7 @@ export default async function ListingDetailsPage({
             </h1>
 
             <p className="mt-4 text-3xl font-black text-slate-950">
-              {formattedPrice}
+              {formatPriceWithCurrency(listing.price, listing.price_currency)}
             </p>
 
             {averageRating !== null && (
@@ -207,6 +243,13 @@ export default async function ListingDetailsPage({
                   This seller submitted verification documents reviewed by admin.
                   Buyers should still inspect products before payment.
                 </p>
+
+                {showArabic && (
+                  <p className="mt-2 text-sm leading-6">
+                    هذا البائع قدم مستندات تحقق تمت مراجعتها من الإدارة. يجب
+                    على المشتري فحص المنتج قبل الدفع.
+                  </p>
+                )}
               </div>
             ) : (
               <div className="mt-6 rounded-3xl bg-slate-50 p-5 text-slate-700">
@@ -215,6 +258,13 @@ export default async function ListingDetailsPage({
                 <p className="mt-2 text-sm leading-6">
                   Please check product details carefully before any transaction.
                 </p>
+
+                {showArabic && (
+                  <p className="mt-2 text-sm leading-6">
+                    هذا البائع غير موثق بالهوية حاليًا. برجاء فحص تفاصيل المنتج
+                    بعناية قبل أي معاملة.
+                  </p>
+                )}
               </div>
             )}
 
@@ -230,6 +280,13 @@ export default async function ListingDetailsPage({
                       The seller declared that this used product condition was
                       checked and described honestly.
                     </p>
+
+                    {showArabic && (
+                      <p className="mt-3 text-sm leading-6">
+                        أقر البائع أن حالة المنتج المستعمل تم فحصها ووصفها
+                        بصدق.
+                      </p>
+                    )}
 
                     {listing.used_verification_notes && (
                       <div className="mt-4 rounded-2xl bg-white p-4 text-sm leading-6">
@@ -248,15 +305,38 @@ export default async function ListingDetailsPage({
               </div>
             )}
 
+            {(listing.voucher_image_url || listing.proof_image_url) && (
+              <div className="mt-8 rounded-3xl bg-slate-50 p-6">
+                <h2 className="font-black">Supporting credibility files</h2>
+
+                <div className="mt-4 grid gap-4 md:grid-cols-2">
+                  {listing.voucher_image_url && (
+                    <SupportImage
+                      title="Purchase voucher / invoice"
+                      imageUrl={listing.voucher_image_url}
+                    />
+                  )}
+
+                  {listing.proof_image_url && (
+                    <SupportImage
+                      title="Scientific / productivity proof"
+                      imageUrl={listing.proof_image_url}
+                    />
+                  )}
+                </div>
+              </div>
+            )}
+
             <BuyerContactBox
               whatsappLink={whatsappLink}
               isSold={isSold}
               listingId={Number(listing.id)}
+              country={listing.country}
             />
 
             <SellerReviewBox
               listingId={Number(listing.id)}
-              sellerId={listing.seller_id}
+              sellerId={listing.seller_id || ""}
               isSold={isSold}
             />
 
@@ -334,16 +414,20 @@ function InfoItem({ label, value }: { label: string; value: string }) {
   );
 }
 
-function formatPrice(price: unknown) {
-  if (price === null || price === undefined || price === "") {
-    return "Price not provided";
-  }
+function SupportImage({
+  title,
+  imageUrl,
+}: {
+  title: string;
+  imageUrl: string;
+}) {
+  return (
+    <div>
+      <p className="mb-2 text-sm font-bold text-slate-600">{title}</p>
 
-  const numericPrice = Number(price);
-
-  if (Number.isNaN(numericPrice)) {
-    return "Price not provided";
-  }
-
-  return `${numericPrice.toLocaleString()} EGP`;
+      <div className="h-40 overflow-hidden rounded-2xl bg-white">
+        <img src={imageUrl} alt={title} className="h-full w-full object-cover" />
+      </div>
+    </div>
+  );
 }

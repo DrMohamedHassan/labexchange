@@ -8,6 +8,12 @@ import {
   LISTING_CATEGORIES,
 } from "@/lib/listing-options";
 import { COUNTRY_OPTIONS, DEFAULT_COUNTRY } from "@/lib/countries";
+import {
+  containsForbiddenLink,
+  DEFAULT_PRICE_CURRENCY,
+  getDefaultCurrencyForCountry,
+  PRICE_CURRENCY_OPTIONS,
+} from "@/lib/currencies";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useState } from "react";
@@ -24,6 +30,7 @@ export default function AddListingPage() {
   const [country, setCountry] = useState(DEFAULT_COUNTRY);
   const [city, setCity] = useState("");
   const [price, setPrice] = useState("");
+  const [priceCurrency, setPriceCurrency] = useState(DEFAULT_PRICE_CURRENCY);
   const [expiryDate, setExpiryDate] = useState("");
   const [storageCondition, setStorageCondition] = useState("");
   const [description, setDescription] = useState("");
@@ -51,12 +58,19 @@ export default function AddListingPage() {
   const isUsedProduct = condition.toLowerCase().startsWith("used");
 
   useEffect(() => {
-    const savedCountry = localStorage.getItem("InterLab Hub_country");
+    const savedCountry = localStorage.getItem("interlabhub_country");
 
     if (savedCountry) {
       setCountry(savedCountry);
+      setPriceCurrency(getDefaultCurrencyForCountry(savedCountry));
     }
   }, []);
+
+  function handleCountryChange(newCountry: string) {
+    setCountry(newCountry);
+    setPriceCurrency(getDefaultCurrencyForCountry(newCountry));
+    localStorage.setItem("interlabhub_country", newCountry);
+  }
 
   function handleProductFigures(files: FileList | null) {
     if (!files) {
@@ -74,6 +88,21 @@ export default function AddListingPage() {
 
     setMessage("");
     setProductFigures(selectedFiles);
+  }
+
+  function findForbiddenLinkField() {
+    const fieldsToCheck = [
+      { label: "Product Title", value: title },
+      { label: "Brand", value: brand },
+      { label: "Quantity", value: quantity },
+      { label: "City", value: city },
+      { label: "Storage Condition", value: storageCondition },
+      { label: "Description", value: description },
+      { label: "Seller Name", value: sellerName },
+      { label: "Used Product Notes", value: usedVerificationNotes },
+    ];
+
+    return fieldsToCheck.find((field) => containsForbiddenLink(field.value));
   }
 
   async function uploadListingFile(file: File, folder: string) {
@@ -103,8 +132,22 @@ export default function AddListingPage() {
       return;
     }
 
+    if (!priceCurrency) {
+      setMessage("Please select the price currency.");
+      return;
+    }
+
     if (!sellerName || !sellerPhone) {
       setMessage("Please add seller name and WhatsApp phone.");
+      return;
+    }
+
+    const forbiddenField = findForbiddenLinkField();
+
+    if (forbiddenField) {
+      setMessage(
+        `Links and emails are not allowed in seller text fields. Please remove the link from: ${forbiddenField.label}.`
+      );
       return;
     }
 
@@ -118,7 +161,11 @@ export default function AddListingPage() {
       return;
     }
 
-    if (!sellerTermsAccepted || !safetyAcknowledged || !prohibitedItemsAcknowledged) {
+    if (
+      !sellerTermsAccepted ||
+      !safetyAcknowledged ||
+      !prohibitedItemsAcknowledged
+    ) {
       setMessage("Please accept all safety and platform terms.");
       return;
     }
@@ -173,6 +220,7 @@ export default function AddListingPage() {
         country,
         city,
         price: Number.isNaN(numericPrice) ? null : numericPrice,
+        price_currency: priceCurrency,
         expiry_date: expiryDate || null,
         storage_condition: storageCondition,
         description,
@@ -196,12 +244,21 @@ export default function AddListingPage() {
       });
 
       if (error) {
-        setMessage(error.message);
+        if (
+          error.message.includes("listings_no_external_links_in_seller_text")
+        ) {
+          setMessage(
+            "Links and emails are not allowed in listing text fields. Please remove any website, email, or external link."
+          );
+        } else {
+          setMessage(error.message);
+        }
+
         setIsSubmitting(false);
         return;
       }
 
-      localStorage.setItem("InterLab Hub_country", country);
+      localStorage.setItem("interlabhub_country", country);
 
       setMessage(
         "Listing submitted successfully. It will appear after admin approval."
@@ -225,7 +282,7 @@ export default function AddListingPage() {
 
       <div className="mx-auto max-w-4xl px-6 py-10">
         <Link href="/" className="mb-6 inline-block font-bold text-emerald-700">
-          â† Back to homepage
+          ← Back to homepage
         </Link>
 
         <div className="rounded-3xl bg-white p-8 shadow-sm">
@@ -235,6 +292,17 @@ export default function AddListingPage() {
             Add your lab item. It will be reviewed by admin before appearing
             publicly.
           </p>
+
+          <div className="mt-6 rounded-3xl border border-red-200 bg-red-50 p-5 text-red-800">
+            <h2 className="font-black">Anti-fraud rule</h2>
+
+            <p className="mt-2 text-sm leading-6">
+              Sellers are not allowed to write websites, emails, or external
+              links inside title, description, notes, brand, city, or seller
+              text fields. Contact must happen only through the approved
+              WhatsApp button after buyer safety confirmation.
+            </p>
+          </div>
 
           <form onSubmit={handleSubmit} className="mt-8 grid gap-6">
             <InputField
@@ -296,7 +364,7 @@ export default function AddListingPage() {
 
                 <select
                   value={country}
-                  onChange={(event) => setCountry(event.target.value)}
+                  onChange={(event) => handleCountryChange(event.target.value)}
                   className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-emerald-700"
                 >
                   {COUNTRY_OPTIONS.map((item) => (
@@ -322,28 +390,48 @@ export default function AddListingPage() {
                 type="number"
               />
 
-              <InputField
-                label="Expiry Date"
-                value={expiryDate}
-                onChange={setExpiryDate}
-                placeholder=""
-                type="date"
-              />
+              <div>
+                <label className="mb-2 block font-bold">
+                  Price Currency *
+                </label>
+
+                <select
+                  value={priceCurrency}
+                  onChange={(event) => setPriceCurrency(event.target.value)}
+                  className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-emerald-700"
+                >
+                  {PRICE_CURRENCY_OPTIONS.map((currency) => (
+                    <option key={currency.code} value={currency.code}>
+                      {currency.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
+
+            <InputField
+              label="Expiry Date"
+              value={expiryDate}
+              onChange={setExpiryDate}
+              placeholder=""
+              type="date"
+            />
 
             <InputField
               label="Storage Condition"
               value={storageCondition}
               onChange={setStorageCondition}
-              placeholder="Example: Stored at 2-8Â°C / room temperature"
+              placeholder="Example: Stored at 2-8°C / room temperature"
             />
 
             <div>
-              <label className="mb-2 block font-bold">Description</label>
+              <label className="mb-2 block font-bold">
+                Description — no links allowed
+              </label>
 
               <textarea
                 rows={6}
-                placeholder="Describe the product condition, storage, expiry, reason for selling, and any important notes."
+                placeholder="Describe the product condition, storage, expiry, reason for selling, and important notes. Do not write links or emails."
                 value={description}
                 onChange={(event) => setDescription(event.target.value)}
                 className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-emerald-700"
@@ -374,12 +462,13 @@ export default function AddListingPage() {
 
                 <p className="mt-2 text-sm leading-6 text-amber-900">
                   Because this item is used, you must honestly declare its
-                  working condition and any defects.
+                  working condition and any defects. Do not write links or
+                  emails.
                 </p>
 
                 <textarea
                   rows={4}
-                  placeholder="Write notes about working condition, defects, usage period, calibration, or testing."
+                  placeholder="Write notes about working condition, defects, usage period, calibration, or testing. No links or emails."
                   value={usedVerificationNotes}
                   onChange={(event) =>
                     setUsedVerificationNotes(event.target.value)
@@ -420,7 +509,7 @@ export default function AddListingPage() {
                 />
 
                 <MultipleFileField
-                  label="Additional Product Figures â€” maximum 3"
+                  label="Additional Product Figures — maximum 3"
                   onChange={handleProductFigures}
                 />
               </div>
