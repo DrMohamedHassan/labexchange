@@ -9,7 +9,6 @@ import {
 } from "@/lib/listing-options";
 import { COUNTRY_OPTIONS, DEFAULT_COUNTRY } from "@/lib/countries";
 import {
-  containsForbiddenLink,
   DEFAULT_PRICE_CURRENCY,
   getDefaultCurrencyForCountry,
   PRICE_CURRENCY_OPTIONS,
@@ -45,6 +44,7 @@ export default function AddListingPage() {
   const [usedVerificationNotes, setUsedVerificationNotes] = useState("");
   const [usedVerificationAcknowledged, setUsedVerificationAcknowledged] =
     useState(false);
+
   const [sellerTermsAccepted, setSellerTermsAccepted] = useState(false);
   const [safetyAcknowledged, setSafetyAcknowledged] = useState(false);
   const [
@@ -58,7 +58,7 @@ export default function AddListingPage() {
   const isUsedProduct = condition.toLowerCase().startsWith("used");
 
   useEffect(() => {
-    const savedCountry = localStorage.getItem("interlabhub_country");
+    const savedCountry = localStorage.getItem("labfinds_country");
 
     if (savedCountry) {
       setCountry(savedCountry);
@@ -69,7 +69,7 @@ export default function AddListingPage() {
   function handleCountryChange(newCountry: string) {
     setCountry(newCountry);
     setPriceCurrency(getDefaultCurrencyForCountry(newCountry));
-    localStorage.setItem("interlabhub_country", newCountry);
+    localStorage.setItem("labfinds_country", newCountry);
   }
 
   function handleProductFigures(files: FileList | null) {
@@ -88,21 +88,6 @@ export default function AddListingPage() {
 
     setMessage("");
     setProductFigures(selectedFiles);
-  }
-
-  function findForbiddenLinkField() {
-    const fieldsToCheck = [
-      { label: "Product Title", value: title },
-      { label: "Brand", value: brand },
-      { label: "Quantity", value: quantity },
-      { label: "City", value: city },
-      { label: "Storage Condition", value: storageCondition },
-      { label: "Description", value: description },
-      { label: "Seller Name", value: sellerName },
-      { label: "Used Product Notes", value: usedVerificationNotes },
-    ];
-
-    return fieldsToCheck.find((field) => containsForbiddenLink(field.value));
   }
 
   async function uploadListingFile(file: File, folder: string) {
@@ -139,15 +124,6 @@ export default function AddListingPage() {
 
     if (!sellerName || !sellerPhone) {
       setMessage("Please add seller name and WhatsApp phone.");
-      return;
-    }
-
-    const forbiddenField = findForbiddenLinkField();
-
-    if (forbiddenField) {
-      setMessage(
-        `Links and emails are not allowed in seller text fields. Please remove the link from: ${forbiddenField.label}.`
-      );
       return;
     }
 
@@ -244,21 +220,12 @@ export default function AddListingPage() {
       });
 
       if (error) {
-        if (
-          error.message.includes("listings_no_external_links_in_seller_text")
-        ) {
-          setMessage(
-            "Links and emails are not allowed in listing text fields. Please remove any website, email, or external link."
-          );
-        } else {
-          setMessage(error.message);
-        }
-
+        setMessage(error.message);
         setIsSubmitting(false);
         return;
       }
 
-      localStorage.setItem("interlabhub_country", country);
+      localStorage.setItem("labfinds_country", country);
 
       setMessage(
         "Listing submitted successfully. It will appear after admin approval."
@@ -292,17 +259,6 @@ export default function AddListingPage() {
             Add your lab item. It will be reviewed by admin before appearing
             publicly.
           </p>
-
-          <div className="mt-6 rounded-3xl border border-red-200 bg-red-50 p-5 text-red-800">
-            <h2 className="font-black">Anti-fraud rule</h2>
-
-            <p className="mt-2 text-sm leading-6">
-              Sellers are not allowed to write websites, emails, or external
-              links inside title, description, notes, brand, city, or seller
-              text fields. Contact must happen only through the approved
-              WhatsApp button after buyer safety confirmation.
-            </p>
-          </div>
 
           <form onSubmit={handleSubmit} className="mt-8 grid gap-6">
             <InputField
@@ -425,13 +381,11 @@ export default function AddListingPage() {
             />
 
             <div>
-              <label className="mb-2 block font-bold">
-                Description — no links allowed
-              </label>
+              <label className="mb-2 block font-bold">Description</label>
 
               <textarea
                 rows={6}
-                placeholder="Describe the product condition, storage, expiry, reason for selling, and important notes. Do not write links or emails."
+                placeholder="Describe the product condition, storage, expiry, reason for selling, and important notes."
                 value={description}
                 onChange={(event) => setDescription(event.target.value)}
                 className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-emerald-700"
@@ -462,13 +416,12 @@ export default function AddListingPage() {
 
                 <p className="mt-2 text-sm leading-6 text-amber-900">
                   Because this item is used, you must honestly declare its
-                  working condition and any defects. Do not write links or
-                  emails.
+                  working condition and any defects.
                 </p>
 
                 <textarea
                   rows={4}
-                  placeholder="Write notes about working condition, defects, usage period, calibration, or testing. No links or emails."
+                  placeholder="Write notes about working condition, defects, usage period, calibration, or testing."
                   value={usedVerificationNotes}
                   onChange={(event) =>
                     setUsedVerificationNotes(event.target.value)
