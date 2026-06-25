@@ -3,7 +3,6 @@
 import { useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
-import { shouldShowArabicForCountry } from "@/lib/countries";
 
 export default function BuyerContactBox({
   whatsappLink,
@@ -17,7 +16,6 @@ export default function BuyerContactBox({
   country?: string | null;
 }) {
   const [accepted, setAccepted] = useState(false);
-  const showArabic = shouldShowArabicForCountry(country);
 
   async function trackWhatsAppClick() {
     const {
@@ -41,17 +39,10 @@ export default function BuyerContactBox({
       <div className="mt-8 rounded-2xl bg-red-50 p-5 text-red-800">
         <p className="font-black">This product has been marked as sold.</p>
 
-        <p className="mt-2 text-sm">
+        <p className="mt-2 text-sm leading-6">
           This advertisement is kept temporarily for transparency and buyer
           review.
         </p>
-
-        {showArabic && (
-          <p className="mt-2 text-sm">
-            ØªÙ… ÙˆØ¶Ø¹ Ø¹Ù„Ø§Ù…Ø© Ø¹Ù„Ù‰ Ù‡Ø°Ø§ Ø§Ù„Ù…Ù†ØªØ¬ ÙƒÙ…Ù†ØªØ¬ Ù…Ø¨Ø§Ø¹ØŒ ÙˆØ³ÙŠØ¨Ù‚Ù‰ Ø§Ù„Ø¥Ø¹Ù„Ø§Ù† Ù…Ø¤Ù‚ØªÙ‹Ø§
-            Ù„Ù„Ø´ÙØ§ÙÙŠØ© ÙˆØ¥ØªØ§Ø­Ø© Ù…Ø±Ø§Ø¬Ø¹Ø© Ø§Ù„Ù…Ø´ØªØ±ÙŠ.
-          </p>
-        )}
       </div>
     );
   }
@@ -67,14 +58,6 @@ export default function BuyerContactBox({
         seller identity before payment.
       </p>
 
-      {showArabic && (
-        <p className="mt-3 text-sm leading-6 text-amber-900">
-          Ù…Ù† Ø£Ø¬Ù„ Ø³Ù„Ø§Ù…ØªÙƒØŒ Ø§Ù„Ø£ÙØ¶Ù„ Ù…Ù‚Ø§Ø¨Ù„Ø© Ø§Ù„Ø¨Ø§Ø¦Ø¹ ÙÙŠ Ù…ÙƒØ§Ù† Ø¢Ù…Ù† ÙˆÙ…ÙˆØ«ÙˆÙ‚ Ù…Ø«Ù„ Ù…Ø±ÙƒØ² Ø¨Ø­Ø«ÙŠØŒ
-          Ù…Ø¹Ù…Ù„ØŒ Ø¬Ø§Ù…Ø¹Ø©ØŒ Ø£Ùˆ Ù…ÙƒØ§Ù† Ø¹Ù…Ù„ Ø±Ø³Ù…ÙŠ. ØªØ£ÙƒØ¯ Ù…Ù† Ø­Ø§Ù„Ø© Ø§Ù„Ù…Ù†ØªØ¬ØŒ ØªØ§Ø±ÙŠØ® Ø§Ù„ØµÙ„Ø§Ø­ÙŠØ©ØŒ
-          Ø§Ù„ØªØ®Ø²ÙŠÙ†ØŒ Ø§Ù„Ù…Ø³ØªÙ†Ø¯Ø§ØªØŒ ÙˆÙ‡ÙˆÙŠØ© Ø§Ù„Ø¨Ø§Ø¦Ø¹ Ù‚Ø¨Ù„ Ø§Ù„Ø¯ÙØ¹.
-        </p>
-      )}
-
       <label className="mt-5 flex gap-3 text-sm leading-6 text-amber-950">
         <input
           type="checkbox"
@@ -86,14 +69,7 @@ export default function BuyerContactBox({
         <span>
           I understand that the website is only a platform and intermediary. I
           am responsible for checking the product and completing the transaction
-          safely.
-          {showArabic && (
-            <>
-              {" "}
-              Ø£Ù‚Ø± Ø£Ù† Ø§Ù„Ù…ÙˆÙ‚Ø¹ Ù…Ø¬Ø±Ø¯ Ù…Ù†ØµØ© ÙˆÙˆØ³ÙŠØ·ØŒ ÙˆØ£Ù†Ù†ÙŠ Ù…Ø³Ø¤ÙˆÙ„ Ø¹Ù† ÙØ­Øµ Ø§Ù„Ù…Ù†ØªØ¬ ÙˆØ¥ØªÙ…Ø§Ù…
-              Ø§Ù„Ù…Ø¹Ø§Ù…Ù„Ø© Ø¨Ø£Ù…Ø§Ù†.
-            </>
-          )}{" "}
+          safely.{" "}
           <Link href="/policies" className="font-bold underline">
             Read policies
           </Link>
