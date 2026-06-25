@@ -62,7 +62,9 @@ export default async function AllListingsPage() {
           </h1>
 
           <p className="mt-4 max-w-3xl leading-7 text-slate-600">
-            This page shows all approved listings available on LabFinds.
+            This page shows all approved listings available on LabFinds. Click
+            Details to view product details, or Buy to open the safety
+            confirmation before WhatsApp.
           </p>
         </div>
       </section>

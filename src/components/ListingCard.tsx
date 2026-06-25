@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { formatPriceWithCurrency } from "@/lib/currencies";
 import { supabase } from "@/lib/supabase";
@@ -40,46 +40,41 @@ export default function ListingCard({
   const [message, setMessage] = useState("");
 
   const isSold = status === "sold";
-  const canEdit = Boolean(currentUserId && sellerId && currentUserId === sellerId);
-  const canDelete = Boolean(
-    currentRole === "admin" || (currentUserId && sellerId && currentUserId === sellerId)
+
+  const canEdit = Boolean(
+    currentUserId && sellerId && currentUserId === sellerId
   );
 
-  const whatsappLink = useMemo(() => {
-    const cleanPhone = String(sellerPhone || "").replace(/\D/g, "");
-
-    if (!cleanPhone) {
-      return "";
-    }
-
-    return `https://wa.me/${cleanPhone}`;
-  }, [sellerPhone]);
+  const canDelete = Boolean(
+    currentRole === "admin" ||
+      (currentUserId && sellerId && currentUserId === sellerId)
+  );
 
   useEffect(() => {
     let mounted = true;
 
     async function loadUser() {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      try {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
 
-      if (!mounted || !user) {
-        return;
+        if (!mounted || !user) return;
+
+        setCurrentUserId(user.id);
+
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", user.id)
+          .maybeSingle();
+
+        if (!mounted) return;
+
+        setCurrentRole(profile?.role || "seller");
+      } catch (error) {
+        console.error("ListingCard user loading failed:", error);
       }
-
-      setCurrentUserId(user.id);
-
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("role")
-        .eq("id", user.id)
-        .maybeSingle();
-
-      if (!mounted) {
-        return;
-      }
-
-      setCurrentRole(profile?.role || "seller");
     }
 
     loadUser();
@@ -94,9 +89,7 @@ export default function ListingCard({
       "Are you sure you want to delete this listing? This action cannot be undone."
     );
 
-    if (!confirmed) {
-      return;
-    }
+    if (!confirmed) return;
 
     setIsDeleting(true);
     setMessage("Deleting...");
@@ -198,15 +191,13 @@ export default function ListingCard({
             Details
           </Link>
 
-          {!isSold && whatsappLink && (
-            <a
-              href={whatsappLink}
-              target="_blank"
-              rel="noreferrer"
+          {!isSold && sellerPhone && (
+            <Link
+              href={`/listings/${id}#buyer-contact`}
               className="rounded-xl bg-emerald-700 px-4 py-2 text-sm font-black text-white hover:bg-emerald-800"
             >
               Buy
-            </a>
+            </Link>
           )}
         </div>
 
