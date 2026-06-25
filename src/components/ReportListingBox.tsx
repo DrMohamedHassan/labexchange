@@ -5,139 +5,138 @@ import { supabase } from "@/lib/supabase";
 
 export default function ReportListingBox({ listingId }: { listingId: number }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [reason, setReason] = useState("Misleading advertisement");
-  const [reporterEmail, setReporterEmail] = useState("");
+  const [reason, setReason] = useState("Misleading or inaccurate listing");
+  const [details, setDetails] = useState("");
   const [message, setMessage] = useState("");
-  const [statusMessage, setStatusMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function submitReport(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (!message || message.trim().length < 10) {
-      setStatusMessage("Please write a clear complaint message.");
+    if (!details.trim() || details.trim().length < 10) {
+      setMessage("Please write report details with at least 10 characters.");
       return;
     }
 
     setIsSubmitting(true);
-    setStatusMessage("Submitting report...");
+    setMessage("Submitting report...");
 
     const {
       data: { user },
+      error: userError,
     } = await supabase.auth.getUser();
 
-    const { error } = await supabase.from("listing_reports").insert({
-      listing_id: listingId,
-      reporter_id: user?.id || null,
-      reporter_email: reporterEmail || user?.email || null,
-      reason,
-      message,
-      status: "new",
-    });
-
-    if (error) {
-      setStatusMessage(error.message);
+    if (userError || !user) {
+      setMessage("Please login first before submitting a report.");
       setIsSubmitting(false);
       return;
     }
 
-    setReason("Misleading advertisement");
-    setReporterEmail("");
-    setMessage("");
-    setStatusMessage(
-      "Report submitted successfully. Admin will review it privately."
-    );
+    const { error } = await supabase.from("listing_reports").insert({
+      listing_id: listingId,
+      reporter_id: user.id,
+      reporter_email: user.email || null,
+      reason,
+      details: details.trim(),
+      status: "new",
+    });
+
+    if (error) {
+      setMessage(error.message);
+      setIsSubmitting(false);
+      return;
+    }
+
+    await supabase.from("notifications").insert({
+      recipient_role: "admin",
+      recipient_id: null,
+      title: "New listing report submitted",
+      message: `A user submitted a report for listing #${listingId}. Reason: ${reason}.`,
+      link_url: "/admin/reports",
+      is_read: false,
+    });
+
+    await supabase.from("notifications").insert({
+      recipient_id: user.id,
+      recipient_role: null,
+      title: "Report submitted successfully",
+      message:
+        "Your report was submitted successfully and will be reviewed by the LabFinds admin team.",
+      link_url: `/listings/${listingId}`,
+      is_read: false,
+    });
+
+    setDetails("");
+    setReason("Misleading or inaccurate listing");
+    setMessage("Report submitted successfully.");
     setIsSubmitting(false);
   }
 
   return (
-    <div className="mt-8 rounded-3xl border border-red-200 bg-red-50 p-5">
+    <div className="mt-8 rounded-3xl border border-red-100 bg-red-50 p-5">
       <button
         type="button"
         onClick={() => setIsOpen((current) => !current)}
-        className="flex w-full items-center justify-between gap-4 text-left font-black text-red-800"
+        className="font-black text-red-700"
       >
-        <span>âš ï¸ Report this ad / Ø§Ù„Ø¥Ø¨Ù„Ø§Øº Ø¹Ù† Ø¥Ø¹Ù„Ø§Ù† Ø£Ùˆ ØªÙ‚Ø¯ÙŠÙ… Ø´ÙƒÙˆÙ‰</span>
-        <span>{isOpen ? "âˆ’" : "+"}</span>
+        Report this listing
       </button>
 
+      <p className="mt-2 text-sm leading-6 text-red-700">
+        Use this if the product looks misleading, unsafe, incorrect, fake, or
+        suspicious.
+      </p>
+
       {isOpen && (
-        <div className="mt-5">
-          <p className="text-sm leading-6 text-red-800">
-            Use this form to report a misleading advertisement, fraud suspicion,
-            prohibited item, or incorrect product information. Reports are
-            visible to admin only.
-          </p>
+        <form onSubmit={submitReport} className="mt-5 grid gap-4">
+          <div>
+            <label className="mb-2 block font-black text-red-900">
+              Report reason
+            </label>
 
-          <p className="mt-2 text-sm leading-6 text-red-800">
-            Ø§Ø³ØªØ®Ø¯Ù… Ù‡Ø°Ø§ Ø§Ù„Ù†Ù…ÙˆØ°Ø¬ Ù„Ù„Ø¥Ø¨Ù„Ø§Øº Ø¹Ù† Ø¥Ø¹Ù„Ø§Ù† Ù…Ø¶Ù„Ù„ØŒ Ø´Ø¨Ù‡Ø© Ø§Ø­ØªÙŠØ§Ù„ØŒ Ù…Ù†ØªØ¬ Ù…Ø­Ø¸ÙˆØ±ØŒ
-            Ø£Ùˆ Ø¨ÙŠØ§Ù†Ø§Øª ØºÙŠØ± ØµØ­ÙŠØ­Ø©. Ø§Ù„Ø´ÙƒÙˆÙ‰ ØªØ¸Ù‡Ø± Ù„Ù„Ø¥Ø¯Ø§Ø±Ø© ÙÙ‚Ø·.
-          </p>
-
-          <form onSubmit={handleSubmit} className="mt-5 grid gap-4">
-            <div>
-              <label className="mb-2 block font-bold text-red-900">
-                Complaint reason
-              </label>
-
-              <select
-                value={reason}
-                onChange={(event) => setReason(event.target.value)}
-                className="w-full rounded-2xl border border-red-200 bg-white px-4 py-3 outline-none focus:border-red-600"
-              >
-                <option>Misleading advertisement</option>
-                <option>Fraud suspicion</option>
-                <option>Prohibited or dangerous item</option>
-                <option>Incorrect product information</option>
-                <option>Fake image or fake proof</option>
-                <option>Intellectual property concern</option>
-                <option>Other complaint</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="mb-2 block font-bold text-red-900">
-                Your email optional
-              </label>
-
-              <input
-                type="email"
-                placeholder="email@example.com"
-                value={reporterEmail}
-                onChange={(event) => setReporterEmail(event.target.value)}
-                className="w-full rounded-2xl border border-red-200 bg-white px-4 py-3 outline-none focus:border-red-600"
-              />
-            </div>
-
-            <div>
-              <label className="mb-2 block font-bold text-red-900">
-                Complaint message *
-              </label>
-
-              <textarea
-                rows={5}
-                placeholder="Write your complaint or explain why this advertisement may be misleading..."
-                value={message}
-                onChange={(event) => setMessage(event.target.value)}
-                className="w-full rounded-2xl border border-red-200 bg-white px-4 py-3 outline-none focus:border-red-600"
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="rounded-2xl bg-red-700 px-6 py-3 font-bold text-white hover:bg-red-800 disabled:cursor-not-allowed disabled:bg-slate-400"
+            <select
+              value={reason}
+              onChange={(event) => setReason(event.target.value)}
+              className="w-full rounded-2xl border border-red-200 bg-white px-4 py-3 outline-none focus:border-red-600"
             >
-              {isSubmitting ? "Submitting..." : "Submit Report to Admin"}
-            </button>
-          </form>
+              <option>Misleading or inaccurate listing</option>
+              <option>Wrong product information</option>
+              <option>Unsafe or prohibited item</option>
+              <option>Suspicious seller</option>
+              <option>Wrong country or location</option>
+              <option>Fake image or copied image</option>
+              <option>Other</option>
+            </select>
+          </div>
 
-          {statusMessage && (
-            <p className="mt-4 rounded-2xl bg-white p-4 text-sm font-semibold text-red-800">
-              {statusMessage}
-            </p>
-          )}
-        </div>
+          <div>
+            <label className="mb-2 block font-black text-red-900">
+              Details
+            </label>
+
+            <textarea
+              rows={5}
+              placeholder="Write what is wrong with this listing..."
+              value={details}
+              onChange={(event) => setDetails(event.target.value)}
+              className="w-full rounded-2xl border border-red-200 bg-white px-4 py-3 outline-none focus:border-red-600"
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="rounded-2xl bg-red-700 px-5 py-3 font-black text-white hover:bg-red-800 disabled:cursor-not-allowed disabled:bg-slate-400"
+          >
+            {isSubmitting ? "Submitting..." : "Submit Report"}
+          </button>
+        </form>
+      )}
+
+      {message && (
+        <p className="mt-4 rounded-2xl bg-white p-4 text-sm font-bold text-red-700">
+          {message}
+        </p>
       )}
     </div>
   );

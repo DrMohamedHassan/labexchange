@@ -17,7 +17,7 @@ export default function ContactPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    const savedCountry = localStorage.getItem("InterLab Hub_country");
+    const savedCountry = localStorage.getItem("labfinds_country");
 
     if (savedCountry) {
       setCountry(savedCountry);
@@ -50,14 +50,21 @@ export default function ContactPage() {
     }
 
     if (!message.trim() || message.trim().length < 10) {
-      setStatusMessage("Please write a clear message with at least 10 characters.");
+      setStatusMessage(
+        "Please write a clear message with at least 10 characters."
+      );
       return;
     }
 
     setIsSubmitting(true);
     setStatusMessage("Sending your message...");
 
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
     const { error } = await supabase.from("contact_messages").insert({
+      user_id: user?.id || null,
       name: name.trim(),
       email: email.trim(),
       country,
@@ -72,6 +79,27 @@ export default function ContactPage() {
       setIsSubmitting(false);
       return;
     }
+
+    if (user?.id) {
+      await supabase.from("notifications").insert({
+        recipient_id: user.id,
+        recipient_role: null,
+        title: "Your message was submitted",
+        message:
+          "Your message was submitted successfully. Admin will review it as soon as possible.",
+        link_url: "/contact",
+        is_read: false,
+      });
+    }
+
+    await supabase.from("notifications").insert({
+      recipient_id: null,
+      recipient_role: "admin",
+      title: "New contact message",
+      message: `New ${messageType} message received from ${name.trim()}.`,
+      link_url: "/admin/contact-messages",
+      is_read: false,
+    });
 
     setName("");
     setSubject("");
@@ -89,12 +117,12 @@ export default function ContactPage() {
 
       <div className="mx-auto max-w-4xl px-6 py-10">
         <Link href="/" className="mb-6 inline-block font-bold text-emerald-700">
-          â† Back to homepage
+          ← Back to homepage
         </Link>
 
         <div className="rounded-3xl bg-white p-8 shadow-sm">
           <p className="mb-4 inline-block rounded-full bg-emerald-50 px-4 py-2 text-sm font-black text-emerald-700">
-            Contact InterLab Hub
+            Contact LabFinds
           </p>
 
           <h1 className="text-4xl font-black">Contact Us</h1>
@@ -162,7 +190,7 @@ export default function ContactPage() {
               label="Subject"
               value={subject}
               onChange={setSubject}
-              placeholder="Example: Complaint about a listing from another country"
+              placeholder="Example: Complaint about a listing"
             />
 
             <div>
@@ -191,16 +219,6 @@ export default function ContactPage() {
               {statusMessage}
             </p>
           )}
-        </div>
-
-        <div className="mt-8 rounded-3xl border border-amber-200 bg-amber-50 p-6 text-amber-900">
-          <h2 className="text-xl font-black">For safety complaints</h2>
-
-          <p className="mt-2 text-sm leading-6">
-            If your complaint is about a specific listing, also use the report
-            button inside the listing page. This helps admin connect the
-            complaint to the correct product.
-          </p>
         </div>
       </div>
     </main>

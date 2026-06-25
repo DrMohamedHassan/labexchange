@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import NotificationBell from "@/components/NotificationBell";
 
 type UserRole = "seller" | "admin" | null;
 
@@ -21,7 +22,7 @@ export default function Header() {
 
         const {
           data: { user },
-          error: userError
+          error: userError,
         } = await supabase.auth.getUser();
 
         if (userError || !user) {
@@ -61,7 +62,7 @@ export default function Header() {
     loadSession();
 
     const {
-      data: { subscription }
+      data: { subscription },
     } = supabase.auth.onAuthStateChange(() => {
       loadSession();
     });
@@ -124,6 +125,8 @@ export default function Header() {
             </span>
           ) : isLoggedIn ? (
             <>
+              <NotificationBell userRole={role} />
+
               {role === "admin" && (
                 <>
                   <Link

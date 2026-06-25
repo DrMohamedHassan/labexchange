@@ -109,6 +109,22 @@ export default function AddListingPage() {
     return data.publicUrl;
   }
 
+  async function createNotificationForUser(
+    recipientId: string,
+    notificationTitle: string,
+    notificationMessage: string,
+    linkUrl: string
+  ) {
+    await supabase.from("notifications").insert({
+      recipient_id: recipientId,
+      recipient_role: null,
+      title: notificationTitle,
+      message: notificationMessage,
+      link_url: linkUrl,
+      is_read: false,
+    });
+  }
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
@@ -224,6 +240,13 @@ export default function AddListingPage() {
         setIsSubmitting(false);
         return;
       }
+
+      await createNotificationForUser(
+        user.id,
+        "Product submitted successfully",
+        "Your product was submitted successfully and is now waiting for admin review.",
+        "/my-listings"
+      );
 
       localStorage.setItem("labfinds_country", country);
 
