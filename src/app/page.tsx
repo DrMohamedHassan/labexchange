@@ -97,6 +97,13 @@ export default async function Home() {
               >
                 Browse Listings
               </a>
+
+              <Link
+                href="/contact"
+                className="rounded-2xl border border-slate-200 bg-white px-6 py-4 font-bold hover:border-emerald-600"
+              >
+                Contact Admin
+              </Link>
             </div>
           </div>
 
@@ -182,6 +189,45 @@ export default async function Home() {
               </Link>
             </div>
           )}
+        </div>
+      </section>
+
+      <section id="contact" className="mx-auto max-w-7xl px-6 py-10">
+        <div className="rounded-[2rem] border border-slate-200 bg-white p-8 shadow-sm">
+          <div className="grid gap-8 md:grid-cols-[1.2fr_0.8fr] md:items-center">
+            <div>
+              <p className="mb-4 inline-block rounded-full bg-emerald-50 px-4 py-2 text-sm font-black text-emerald-700">
+                Need help?
+              </p>
+
+              <h2 className="text-3xl font-black">Contact LabExchange Admin</h2>
+
+              <p className="mt-4 max-w-2xl leading-7 text-slate-600">
+                Send enquiries, complaints, seller issues, buyer issues, fraud
+                concerns, country mistakes, or technical problems directly to
+                admin.
+              </p>
+
+              <Link
+                href="/contact"
+                className="mt-6 inline-block rounded-2xl bg-emerald-700 px-6 py-4 font-black text-white hover:bg-emerald-800"
+              >
+                Open Contact Form
+              </Link>
+            </div>
+
+            <div className="rounded-3xl bg-slate-50 p-6">
+              <h3 className="font-black">Best for:</h3>
+
+              <ul className="mt-4 grid gap-3 text-sm leading-6 text-slate-700">
+                <li>• Buyer or seller complaint</li>
+                <li>• Wrong country listing</li>
+                <li>• Fraud or safety concern</li>
+                <li>• Technical website problem</li>
+                <li>• Partnership or general enquiry</li>
+              </ul>
+            </div>
+          </div>
         </div>
       </section>
 

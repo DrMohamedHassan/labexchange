@@ -117,6 +117,10 @@ export default function Header() {
           <Link href="/policies" className="hover:text-emerald-700">
             Policies
           </Link>
+
+          <Link href="/contact" className="hover:text-emerald-700">
+            Contact
+          </Link>
         </nav>
 
         <div className="flex flex-wrap items-center justify-end gap-2">
@@ -147,6 +151,13 @@ export default function Header() {
                     className="hidden rounded-xl border border-red-200 bg-red-50 px-4 py-2 text-sm font-bold text-red-700 hover:border-red-500 md:inline-block"
                   >
                     Reports
+                  </Link>
+
+                  <Link
+                    href="/admin/contact-messages"
+                    className="hidden rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-bold text-indigo-700 hover:border-indigo-500 md:inline-block"
+                  >
+                    Messages
                   </Link>
 
                   <Link
@@ -186,6 +197,13 @@ export default function Header() {
               </Link>
 
               <Link
+                href="/contact"
+                className="hidden rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold shadow-sm hover:border-emerald-600 md:inline-block"
+              >
+                Contact
+              </Link>
+
+              <Link
                 href="/add-listing"
                 className="rounded-xl bg-emerald-700 px-4 py-2 text-sm font-bold text-white shadow-sm hover:bg-emerald-800 md:px-5 md:py-3"
               >
@@ -214,6 +232,13 @@ export default function Header() {
                 className="hidden rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold shadow-sm hover:border-emerald-600 md:inline-block md:px-5 md:py-3"
               >
                 Create Account
+              </Link>
+
+              <Link
+                href="/contact"
+                className="hidden rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold shadow-sm hover:border-emerald-600 md:inline-block md:px-5 md:py-3"
+              >
+                Contact
               </Link>
 
               <Link
