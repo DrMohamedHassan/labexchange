@@ -1,38 +1,38 @@
 import type { MetadataRoute } from "next";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const siteUrl = "https://interlab-hub.vercel.app";
+  const siteUrl = "https://www.labfinds.com";
 
   return [
     {
       url: siteUrl,
       lastModified: new Date(),
       changeFrequency: "daily",
-      priority: 1,
+      priority: 1
     },
     {
       url: `${siteUrl}/policies`,
       lastModified: new Date(),
       changeFrequency: "monthly",
-      priority: 0.7,
+      priority: 0.7
     },
     {
       url: `${siteUrl}/contact`,
       lastModified: new Date(),
       changeFrequency: "monthly",
-      priority: 0.7,
+      priority: 0.7
     },
     {
       url: `${siteUrl}/login`,
       lastModified: new Date(),
       changeFrequency: "monthly",
-      priority: 0.4,
+      priority: 0.4
     },
     {
       url: `${siteUrl}/register`,
       lastModified: new Date(),
       changeFrequency: "monthly",
-      priority: 0.4,
-    },
+      priority: 0.4
+    }
   ];
 }

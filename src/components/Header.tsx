@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -21,7 +21,7 @@ export default function Header() {
 
         const {
           data: { user },
-          error: userError,
+          error: userError
         } = await supabase.auth.getUser();
 
         if (userError || !user) {
@@ -61,7 +61,7 @@ export default function Header() {
     loadSession();
 
     const {
-      data: { subscription },
+      data: { subscription }
     } = supabase.auth.onAuthStateChange(() => {
       loadSession();
     });
@@ -91,11 +91,11 @@ export default function Header() {
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-6 py-4">
         <Link href="/" className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-emerald-200 bg-emerald-50 text-sm font-black text-emerald-800">
-            IH
+            LF
           </div>
 
           <span className="text-xl font-black md:text-2xl">
-            InterLab<span className="text-emerald-700"> Hub</span>
+            Lab<span className="text-emerald-700">Finds</span>
           </span>
         </Link>
 

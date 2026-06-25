@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
 
 export default function robots(): MetadataRoute.Robots {
-  const siteUrl = "https://interlab-hub.vercel.app";
+  const siteUrl = "https://www.labfinds.com";
 
   return {
     rules: {
@@ -12,9 +12,9 @@ export default function robots(): MetadataRoute.Robots {
         "/admin/",
         "/my-listings",
         "/verify-seller",
-        "/reset-password",
-      ],
+        "/reset-password"
+      ]
     },
-    sitemap: `${siteUrl}/sitemap.xml`,
+    sitemap: `${siteUrl}/sitemap.xml`
   };
 }

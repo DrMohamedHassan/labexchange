@@ -21,7 +21,7 @@ const categories = [
   "Standards & Controls",
   "Agricultural Biotechnology",
   "Equipment",
-  "Others",
+  "Others"
 ];
 
 type PublicListing = {
@@ -69,19 +69,20 @@ export default async function Home() {
         <div className="mx-auto grid max-w-7xl gap-10 px-6 py-12 lg:grid-cols-[1fr_1.1fr] lg:items-center lg:py-16">
           <div>
             <p className="mb-4 inline-block rounded-full bg-emerald-50 px-4 py-2 text-sm font-black text-emerald-700">
-              Global InterLab Hub Beta
+              Global LabFinds Beta
             </p>
 
             <h1 className="max-w-xl text-4xl font-black leading-tight md:text-5xl lg:text-6xl">
-              Buy and sell{" "}
+              Find, buy, and sell{" "}
               <span className="text-emerald-700">lab supplies</span>
               <br />
               by country.
             </h1>
 
             <p className="mt-6 max-w-lg text-base leading-7 text-slate-700 md:text-lg md:leading-8">
-              Select your country market, browse approved listings, sell surplus
-              lab products, and contact sellers safely through reviewed ads.
+              LabFinds helps labs, researchers, suppliers, and verified sellers
+              list and discover reviewed lab supplies, reagents, consumables,
+              equipment, and biotechnology products by country.
             </p>
 
             <div className="mt-8 flex flex-wrap gap-3">
@@ -111,7 +112,7 @@ export default async function Home() {
           <div className="relative min-h-[280px] overflow-hidden rounded-[2rem] bg-slate-100 shadow-xl shadow-slate-200 md:min-h-[360px]">
             <Image
               src="/images/hero-lab.png"
-              alt="InterLab Hub laboratory marketplace"
+              alt="LabFinds laboratory supplies marketplace"
               fill
               priority
               className="object-cover"
@@ -138,7 +139,7 @@ export default async function Home() {
               <h3 className="font-black">{category}</h3>
 
               <p className="mt-2 text-sm leading-6 text-slate-600">
-                Browse approved listings related to {category}.
+                Browse approved LabFinds listings related to {category}.
               </p>
             </div>
           ))}
@@ -179,8 +180,8 @@ export default async function Home() {
               <h3 className="text-2xl font-black">No approved listings yet</h3>
 
               <p className="mt-3 max-w-2xl text-slate-600">
-                Once sellers add real listings and admin approves them, they will
-                appear here.
+                Once sellers add real LabFinds listings and admin approves them,
+                they will appear here.
               </p>
 
               <Link
@@ -202,12 +203,12 @@ export default async function Home() {
                 Need help?
               </p>
 
-              <h2 className="text-3xl font-black">Contact InterLab Hub Admin</h2>
+              <h2 className="text-3xl font-black">Contact LabFinds Admin</h2>
 
               <p className="mt-4 max-w-2xl leading-7 text-slate-600">
                 Send enquiries, complaints, seller issues, buyer issues, fraud
                 concerns, country mistakes, or technical problems directly to
-                admin.
+                the LabFinds admin team.
               </p>
 
               <Link
@@ -236,7 +237,7 @@ export default async function Home() {
       <section className="mx-auto max-w-7xl px-6 pb-16 pt-4">
         <div className="rounded-[2rem] bg-gradient-to-r from-emerald-950 to-teal-800 p-8 text-white shadow-xl">
           <h2 className="text-2xl font-black">
-            InterLab Hub is expanding country by country
+            LabFinds is expanding country by country
           </h2>
 
           <p className="mt-3 max-w-3xl text-sm leading-6 text-emerald-50">

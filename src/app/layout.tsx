@@ -2,22 +2,24 @@ import type { Metadata } from "next";
 import AnalyticsTracker from "@/components/AnalyticsTracker";
 import "./globals.css";
 
-const siteUrl = "https://interlab-hub.vercel.app";
+const siteUrl = "https://www.labfinds.com";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "InterLab Hub | Global Lab Supplies Marketplace",
-    template: "%s | InterLab Hub",
+    default: "LabFinds | Global Lab Supplies Marketplace",
+    template: "%s | LabFinds",
   },
   description:
-    "InterLab Hub is a reviewed global marketplace for buying and selling new, unused, and used lab supplies, reagents, consumables, PCR reagents, qPCR reagents, primers, probes, extraction kits, plasticware, equipment, and biotechnology research products.",
+    "LabFinds is a reviewed global marketplace for buying and selling new, unused, and used lab supplies, reagents, consumables, PCR reagents, qPCR reagents, primers, probes, extraction kits, plasticware, equipment, and biotechnology research products.",
   keywords: [
-    "InterLab Hub",
+    "LabFinds",
+    "LabFinds marketplace",
     "lab supplies marketplace",
     "laboratory supplies",
     "used lab supplies",
     "unused lab reagents",
+    "surplus lab supplies",
     "PCR reagents",
     "qPCR reagents",
     "primers and probes",
@@ -29,13 +31,12 @@ export const metadata: Metadata = {
     "lab plasticware",
     "lab equipment marketplace",
     "biotechnology marketplace",
-    "agricultural biotechnology supplies",
-    "research supplies",
-    "surplus lab supplies",
+    "research supplies marketplace",
+    "scientific supplies marketplace"
   ],
-  authors: [{ name: "InterLab Hub" }],
-  creator: "InterLab Hub",
-  publisher: "InterLab Hub",
+  authors: [{ name: "LabFinds" }],
+  creator: "LabFinds",
+  publisher: "LabFinds",
   robots: {
     index: true,
     follow: true,
@@ -44,50 +45,51 @@ export const metadata: Metadata = {
       follow: true,
       "max-image-preview": "large",
       "max-snippet": -1,
-      "max-video-preview": -1,
-    },
+      "max-video-preview": -1
+    }
   },
   openGraph: {
     type: "website",
-    title: "InterLab Hub | Global Lab Supplies Marketplace",
+    url: siteUrl,
+    title: "LabFinds | Global Lab Supplies Marketplace",
     description:
       "Buy and sell reviewed lab supplies, reagents, consumables, equipment, and biotechnology research products by country.",
-    siteName: "InterLab Hub",
+    siteName: "LabFinds",
     images: [
       {
         url: "/images/hero-lab.png",
         width: 1200,
         height: 630,
-        alt: "InterLab Hub laboratory supplies marketplace",
-      },
-    ],
+        alt: "LabFinds laboratory supplies marketplace"
+      }
+    ]
   },
   twitter: {
     card: "summary_large_image",
-    title: "InterLab Hub | Global Lab Supplies Marketplace",
+    title: "LabFinds | Global Lab Supplies Marketplace",
     description:
       "A reviewed global marketplace for new, unused, and used lab supplies.",
-    images: ["/images/hero-lab.png"],
-  },
+    images: ["/images/hero-lab.png"]
+  }
 };
 
 export default function RootLayout({
-  children,
+  children
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "WebSite",
-    name: "InterLab Hub",
+    name: "LabFinds",
     url: siteUrl,
     description:
       "A reviewed marketplace for buying and selling new, unused, and used lab supplies and biotechnology research products.",
     potentialAction: {
       "@type": "SearchAction",
       target: `${siteUrl}/?search={search_term_string}`,
-      "query-input": "required name=search_term_string",
-    },
+      "query-input": "required name=search_term_string"
+    }
   };
 
   return (
@@ -99,7 +101,7 @@ export default function RootLayout({
           type="application/ld+json"
           suppressHydrationWarning
           dangerouslySetInnerHTML={{
-            __html: JSON.stringify(structuredData),
+            __html: JSON.stringify(structuredData)
           }}
         />
 
