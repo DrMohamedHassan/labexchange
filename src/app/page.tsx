@@ -15,7 +15,7 @@ const categories = [
   },
   {
     name: "qPCR Reagents",
-    image: "/images/category-reagents.png",
+    image: "/images/category-reagents.PNG",
     description: "qPCR master mixes, probes, dyes, controls, and kits.",
   },
   {
@@ -30,17 +30,17 @@ const categories = [
   },
   {
     name: "Electrophoresis Consumables",
-    image: "/images/category-electrophoresis.png",
+    image: "/images/category-electrophoresis.PNG",
     description: "Gels, ladders, buffers, loading dyes, and gel accessories.",
   },
   {
     name: "Cloning & Transformation",
-    image: "/images/category-cloning.png",
+    image: "/images/category-cloning.PNG",
     description: "Cloning kits, competent cells, vectors, and transformation items.",
   },
   {
     name: "Sequencing & NGS",
-    image: "/images/category-sequencing.png",
+    image: "/images/category-sequencing.PNG",
     description: "Sequencing kits, NGS library materials, and related supplies.",
   },
   {
@@ -50,7 +50,7 @@ const categories = [
   },
   {
     name: "Immunology & Protein Analysis",
-    image: "/images/category-immunology.png",
+    image: "/images/category-immunology.PNG",
     description: "Antibodies, ELISA materials, protein assays, and immunology tools.",
   },
   {
@@ -60,17 +60,17 @@ const categories = [
   },
   {
     name: "Standards & Controls",
-    image: "/images/product-placeholder.png",
+    image: "/images/category-reagents.PNG",
     description: "Reference standards, controls, calibrators, and quality materials.",
   },
   {
     name: "Agricultural Biotechnology",
-    image: "/images/category-agriculture.png",
+    image: "/images/category-agriculture.PNG",
     description: "Plant biotech, crop testing, agricultural molecular biology supplies.",
   },
   {
     name: "Equipment",
-    image: "/images/category-equipment.png",
+    image: "/images/category-equipment.PNG",
     description: "Reviewed lab devices, small equipment, and verified used instruments.",
   },
   {
