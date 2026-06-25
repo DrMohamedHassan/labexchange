@@ -11,6 +11,8 @@ export const LISTING_CATEGORIES = [
   "Plasticware",
   "Standards & Controls",
   "Agricultural Biotechnology",
+  "Equipment",
+  "Others",
 ] as const;
 
 export const CONDITION_OPTIONS = [

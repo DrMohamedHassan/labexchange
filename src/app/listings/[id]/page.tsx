@@ -1,6 +1,7 @@
 import BuyerContactBox from "@/components/BuyerContactBox";
 import Header from "@/components/Header";
 import ReportListingBox from "@/components/ReportListingBox";
+import SellerReviewBox from "@/components/SellerReviewBox";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 
@@ -17,6 +18,14 @@ type SellerProfile = {
   verification_status: string | null;
 };
 
+type SellerReview = {
+  id: number;
+  rating: number;
+  comment: string;
+  buyer_email: string | null;
+  created_at: string;
+};
+
 export default async function ListingDetailsPage({
   params,
 }: ListingDetailsPageProps) {
@@ -30,7 +39,7 @@ export default async function ListingDetailsPage({
   const { data: listing, error } = await supabase
     .from("listings")
     .select(
-      "id, seller_id, title, brand, quantity, category, condition, city, price, expiry_date, storage_condition, description, seller_name, seller_phone, status, image_url, product_image_url, voucher_image_url, proof_image_url, used_verification_acknowledged, used_verification_notes"
+      "id, seller_id, title, brand, quantity, category, condition, country, city, price, expiry_date, storage_condition, description, seller_name, seller_phone, status, image_url, product_image_url, voucher_image_url, proof_image_url, used_verification_acknowledged, used_verification_notes"
     )
     .eq("id", listingId)
     .in("status", ["approved", "sold"])
@@ -51,6 +60,22 @@ export default async function ListingDetailsPage({
 
     sellerProfile = profileData as SellerProfile | null;
   }
+
+  const { data: reviewsData } = await supabase
+    .from("seller_reviews")
+    .select("id, rating, comment, buyer_email, created_at")
+    .eq("seller_id", listing.seller_id)
+    .eq("status", "approved")
+    .order("created_at", { ascending: false })
+    .limit(5);
+
+  const sellerReviews = (reviewsData || []) as SellerReview[];
+
+  const averageRating =
+    sellerReviews.length > 0
+      ? sellerReviews.reduce((sum, review) => sum + review.rating, 0) /
+        sellerReviews.length
+      : null;
 
   const productImage =
     listing.product_image_url ||
@@ -79,9 +104,10 @@ export default async function ListingDetailsPage({
         {isSold && (
           <div className="mb-6 rounded-3xl bg-red-50 p-5 text-red-800">
             <h2 className="text-xl font-black">This product has been sold</h2>
+
             <p className="mt-2 text-sm">
-              This advertisement is shown temporarily for transparency and may be
-              removed later by the admin.
+              This advertisement is shown temporarily for transparency and
+              buyer review.
             </p>
           </div>
         )}
@@ -112,7 +138,8 @@ export default async function ListingDetailsPage({
           <div className="rounded-3xl bg-white p-8 shadow-sm">
             <div className="flex flex-wrap items-center gap-3">
               <p className="text-sm font-extrabold uppercase tracking-wide text-emerald-700">
-                {listing.category || "General"}
+                {listing.category || "General"} ·{" "}
+                {listing.country || "Country not set"}
               </p>
 
               {isVerifiedSeller && (
@@ -130,9 +157,47 @@ export default async function ListingDetailsPage({
               {formattedPrice}
             </p>
 
+            {averageRating !== null && (
+              <div className="mt-4 rounded-2xl bg-amber-50 p-4 text-amber-900">
+                <p className="font-black">
+                  Seller rating: {averageRating.toFixed(1)} / 5 ★
+                </p>
+
+                <p className="mt-1 text-sm">
+                  Based on approved buyer reviews.
+                </p>
+              </div>
+            )}
+
             <p className="mt-5 text-lg leading-8 text-slate-600">
               {listing.description || "No description added."}
             </p>
+
+            <div className="mt-8 grid gap-4 rounded-3xl bg-slate-50 p-6 md:grid-cols-2">
+              <InfoItem label="Country" value={listing.country || "Not set"} />
+              <InfoItem label="City" value={listing.city || "Not provided"} />
+              <InfoItem label="Brand" value={listing.brand || "Not provided"} />
+              <InfoItem
+                label="Quantity"
+                value={listing.quantity || "Not provided"}
+              />
+              <InfoItem
+                label="Condition"
+                value={listing.condition || "Not provided"}
+              />
+              <InfoItem
+                label="Expiry Date"
+                value={listing.expiry_date || "Not applicable"}
+              />
+              <InfoItem
+                label="Storage"
+                value={listing.storage_condition || "Not provided"}
+              />
+              <InfoItem
+                label="Seller"
+                value={listing.seller_name || "Seller"}
+              />
+            </div>
 
             {isVerifiedSeller ? (
               <div className="mt-6 rounded-3xl bg-emerald-50 p-5 text-emerald-800">
@@ -140,13 +205,7 @@ export default async function ListingDetailsPage({
 
                 <p className="mt-2 text-sm leading-6">
                   This seller submitted verification documents reviewed by admin.
-                  This increases trust, but buyers should still inspect products
-                  before payment.
-                </p>
-
-                <p className="mt-2 text-sm leading-6">
-                  هذا البائع قدم مستندات تحقق تمت مراجعتها من الإدارة. هذا يزيد
-                  الثقة، لكن يجب على المشتري فحص المنتج قبل الدفع.
+                  Buyers should still inspect products before payment.
                 </p>
               </div>
             ) : (
@@ -154,8 +213,7 @@ export default async function ListingDetailsPage({
                 <h2 className="font-black">Seller not ID verified yet</h2>
 
                 <p className="mt-2 text-sm leading-6">
-                  The seller is not currently marked as verified by ID. Please
-                  check product details carefully before any transaction.
+                  Please check product details carefully before any transaction.
                 </p>
               </div>
             )}
@@ -170,15 +228,7 @@ export default async function ListingDetailsPage({
                   <>
                     <p className="mt-3 text-sm leading-6">
                       The seller declared that this used product condition was
-                      checked and described honestly. This is a seller
-                      declaration reviewed by admin; it is not a platform
-                      guarantee.
-                    </p>
-
-                    <p className="mt-3 text-sm leading-6">
-                      أقر البائع أن حالة المنتج المستعمل تم فحصها ووصفها بصدق.
-                      هذا إقرار من البائع تمت مراجعته من الإدارة، وليس ضمانًا من
-                      المنصة.
+                      checked and described honestly.
                     </p>
 
                     {listing.used_verification_notes && (
@@ -192,75 +242,63 @@ export default async function ListingDetailsPage({
                   </>
                 ) : (
                   <p className="mt-3 text-sm leading-6">
-                    No used-condition verification notes were provided by the
-                    seller.
+                    No used-condition verification notes were provided.
                   </p>
                 )}
               </div>
             )}
 
-            <div className="mt-8 grid gap-4 rounded-3xl bg-slate-50 p-6 md:grid-cols-2">
-              <InfoItem label="Brand" value={listing.brand || "Not provided"} />
+            <BuyerContactBox
+              whatsappLink={whatsappLink}
+              isSold={isSold}
+              listingId={Number(listing.id)}
+            />
 
-              <InfoItem
-                label="Quantity"
-                value={listing.quantity || "Not provided"}
-              />
+            <SellerReviewBox
+              listingId={Number(listing.id)}
+              sellerId={listing.seller_id}
+              isSold={isSold}
+            />
 
-              <InfoItem
-                label="Condition"
-                value={listing.condition || "Not provided"}
-              />
-
-              <InfoItem label="City" value={listing.city || "Not provided"} />
-
-              <InfoItem
-                label="Expiry Date"
-                value={listing.expiry_date || "Not applicable"}
-              />
-
-              <InfoItem
-                label="Storage"
-                value={listing.storage_condition || "Not provided"}
-              />
-
-              <InfoItem
-                label="Seller"
-                value={listing.seller_name || "Seller"}
-              />
-
-              <InfoItem label="Status" value={listing.status || "approved"} />
-            </div>
-
-            {(listing.voucher_image_url || listing.proof_image_url) && (
-              <div className="mt-8 rounded-3xl bg-slate-50 p-6">
-                <h2 className="font-black">Supporting credibility files</h2>
-
-                <div className="mt-4 grid gap-4 md:grid-cols-2">
-                  {listing.voucher_image_url && (
-                    <SupportImage
-                      title="Purchase voucher / invoice"
-                      imageUrl={listing.voucher_image_url}
-                    />
-                  )}
-
-                  {listing.proof_image_url && (
-                    <SupportImage
-                      title="Scientific / productivity proof"
-                      imageUrl={listing.proof_image_url}
-                    />
-                  )}
-                </div>
-              </div>
-            )}
-
-            <BuyerContactBox whatsappLink={whatsappLink} isSold={isSold} />
+            <SellerReviewsList reviews={sellerReviews} />
 
             <ReportListingBox listingId={Number(listing.id)} />
           </div>
         </div>
       </div>
     </main>
+  );
+}
+
+function SellerReviewsList({ reviews }: { reviews: SellerReview[] }) {
+  return (
+    <div className="mt-8 rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-100">
+      <h2 className="text-xl font-black">Approved Seller Reviews</h2>
+
+      <div className="mt-5 grid gap-4">
+        {reviews.length > 0 ? (
+          reviews.map((review) => (
+            <div key={review.id} className="rounded-2xl bg-slate-50 p-4">
+              <p className="text-lg font-black text-amber-500">
+                {"★".repeat(review.rating)}
+                <span className="text-slate-300">
+                  {"★".repeat(5 - review.rating)}
+                </span>
+              </p>
+
+              <p className="mt-2 leading-7 text-slate-700">{review.comment}</p>
+
+              <p className="mt-3 text-xs font-bold text-slate-500">
+                {review.buyer_email || "Buyer"} ·{" "}
+                {new Date(review.created_at).toLocaleDateString()}
+              </p>
+            </div>
+          ))
+        ) : (
+          <p className="text-slate-500">No approved reviews yet.</p>
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -293,24 +331,6 @@ function InfoItem({ label, value }: { label: string; value: string }) {
       <span className="block text-sm font-bold text-slate-500">{label}</span>
       <span className="font-bold text-slate-950">{value}</span>
     </p>
-  );
-}
-
-function SupportImage({
-  title,
-  imageUrl,
-}: {
-  title: string;
-  imageUrl: string;
-}) {
-  return (
-    <div>
-      <p className="mb-2 text-sm font-bold text-slate-600">{title}</p>
-
-      <div className="h-40 overflow-hidden rounded-2xl bg-white">
-        <img src={imageUrl} alt={title} className="h-full w-full object-cover" />
-      </div>
-    </div>
   );
 }
 

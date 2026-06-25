@@ -9,36 +9,59 @@ type UserRole = "seller" | "admin" | null;
 export default function Header() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [role, setRole] = useState<UserRole>(null);
+  const [isVerifiedSeller, setIsVerifiedSeller] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function loadSession() {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+    let isMounted = true;
 
-      if (!user) {
+    async function loadSession() {
+      try {
+        setLoading(true);
+
+        const {
+          data: { user },
+          error: userError,
+        } = await supabase.auth.getUser();
+
+        if (userError || !user) {
+          if (!isMounted) return;
+
+          setIsLoggedIn(false);
+          setRole(null);
+          setIsVerifiedSeller(false);
+          setLoading(false);
+          return;
+        }
+
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("role, is_verified_seller")
+          .eq("id", user.id)
+          .maybeSingle();
+
+        if (!isMounted) return;
+
+        setIsLoggedIn(true);
+
+        if (profile?.role === "admin") {
+          setRole("admin");
+        } else {
+          setRole("seller");
+        }
+
+        setIsVerifiedSeller(Boolean(profile?.is_verified_seller));
+        setLoading(false);
+      } catch (error) {
+        console.error("Header session loading failed:", error);
+
+        if (!isMounted) return;
+
         setIsLoggedIn(false);
         setRole(null);
+        setIsVerifiedSeller(false);
         setLoading(false);
-        return;
       }
-
-      setIsLoggedIn(true);
-
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("role")
-        .eq("id", user.id)
-        .single();
-
-      if (profile?.role === "admin") {
-        setRole("admin");
-      } else {
-        setRole("seller");
-      }
-
-      setLoading(false);
     }
 
     loadSession();
@@ -50,22 +73,28 @@ export default function Header() {
     });
 
     return () => {
+      isMounted = false;
       subscription.unsubscribe();
     };
   }, []);
 
   async function handleLogout() {
-    await supabase.auth.signOut();
+    try {
+      await supabase.auth.signOut();
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
 
     setIsLoggedIn(false);
     setRole(null);
+    setIsVerifiedSeller(false);
 
     window.location.href = "/";
   }
 
   return (
     <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/95 backdrop-blur">
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
+      <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-6 py-4">
         <Link href="/" className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-emerald-200 bg-emerald-50 text-sm font-black text-emerald-800">
             LX
@@ -76,7 +105,7 @@ export default function Header() {
           </span>
         </Link>
 
-        <nav className="hidden items-center gap-8 text-sm font-extrabold lg:flex">
+        <nav className="hidden items-center gap-7 text-sm font-extrabold xl:flex">
           <a href="/#listings" className="hover:text-emerald-700">
             Browse
           </a>
@@ -85,16 +114,12 @@ export default function Header() {
             Categories
           </a>
 
-          <a href="/#how-it-works" className="hover:text-emerald-700">
-            How it Works
-          </a>
-
-          <a href="/#trust" className="hover:text-emerald-700">
-            About Us
-          </a>
+          <Link href="/policies" className="hover:text-emerald-700">
+            Policies
+          </Link>
         </nav>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center justify-end gap-2">
           {loading ? (
             <span className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-500">
               Loading...
@@ -102,11 +127,54 @@ export default function Header() {
           ) : isLoggedIn ? (
             <>
               {role === "admin" && (
+                <>
+                  <Link
+                    href="/admin"
+                    className="hidden rounded-xl border border-purple-200 bg-purple-50 px-4 py-2 text-sm font-bold text-purple-700 hover:border-purple-500 md:inline-block"
+                  >
+                    Admin
+                  </Link>
+
+                  <Link
+                    href="/admin/analytics"
+                    className="hidden rounded-xl border border-sky-200 bg-sky-50 px-4 py-2 text-sm font-bold text-sky-700 hover:border-sky-500 md:inline-block"
+                  >
+                    Analytics
+                  </Link>
+
+                  <Link
+                    href="/admin/reports"
+                    className="hidden rounded-xl border border-red-200 bg-red-50 px-4 py-2 text-sm font-bold text-red-700 hover:border-red-500 md:inline-block"
+                  >
+                    Reports
+                  </Link>
+
+                  <Link
+                    href="/admin/reviews"
+                    className="hidden rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-bold text-amber-700 hover:border-amber-500 md:inline-block"
+                  >
+                    Reviews
+                  </Link>
+
+                  <Link
+                    href="/admin/verifications"
+                    className="hidden rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-bold text-emerald-700 hover:border-emerald-500 md:inline-block"
+                  >
+                    Verifications
+                  </Link>
+                </>
+              )}
+
+              {role !== "admin" && (
                 <Link
-                  href="/admin"
-                  className="hidden rounded-xl border border-purple-200 bg-purple-50 px-4 py-2 text-sm font-bold text-purple-700 hover:border-purple-500 md:inline-block"
+                  href="/verify-seller"
+                  className={
+                    isVerifiedSeller
+                      ? "hidden rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-bold text-emerald-700 md:inline-block"
+                      : "hidden rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-bold text-amber-700 hover:border-amber-500 md:inline-block"
+                  }
                 >
-                  Admin
+                  {isVerifiedSeller ? "Verified Seller" : "Verify Seller"}
                 </Link>
               )}
 

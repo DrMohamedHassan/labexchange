@@ -1,8 +1,9 @@
 "use client";
 
+import Header from "@/components/Header";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { FormEvent, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
 export default function LoginPage() {
@@ -13,7 +14,7 @@ export default function LoginPage() {
   const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  async function handleLogin(event: React.FormEvent<HTMLFormElement>) {
+  async function handleLogin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     if (!email || !password) {
@@ -44,8 +45,10 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-50 px-6 py-10 text-slate-950">
-      <div className="mx-auto max-w-md">
+    <main className="min-h-screen bg-slate-50 text-slate-950">
+      <Header />
+
+      <div className="mx-auto max-w-md px-6 py-10">
         <Link href="/" className="mb-6 inline-block font-bold text-emerald-700">
           ← Back to homepage
         </Link>
@@ -60,24 +63,36 @@ export default function LoginPage() {
           <form onSubmit={handleLogin} className="mt-8 grid gap-5">
             <div>
               <label className="mb-2 block font-bold">Email</label>
+
               <input
                 type="email"
                 placeholder="test1@gmail.com"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(event) => setEmail(event.target.value)}
                 className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-emerald-700"
               />
             </div>
 
             <div>
               <label className="mb-2 block font-bold">Password</label>
+
               <input
                 type="password"
                 placeholder="Your password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(event) => setPassword(event.target.value)}
                 className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-emerald-700"
               />
+            </div>
+
+            <div className="flex items-center justify-between gap-4 text-sm">
+              <Link href="/forgot-password" className="font-bold text-emerald-700">
+                Forgot password?
+              </Link>
+
+              <Link href="/register" className="font-bold text-emerald-700">
+                Create account
+              </Link>
             </div>
 
             <button
@@ -94,13 +109,6 @@ export default function LoginPage() {
               {message}
             </p>
           )}
-
-          <p className="mt-6 text-center text-sm text-slate-600">
-            Do not have an account?{" "}
-            <Link href="/register" className="font-bold text-emerald-700">
-              Create Account
-            </Link>
-          </p>
         </div>
       </div>
     </main>
