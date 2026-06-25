@@ -2,11 +2,14 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { FormEvent } from "react";
+import { useRouter } from "next/navigation";
 import ListingCard from "@/components/ListingCard";
 
 export type HomepageListing = {
   id: number;
+  seller_id: string | null;
+  seller_phone: string | null;
   title: string | null;
   category: string | null;
   condition: string | null;
@@ -79,7 +82,8 @@ const categories = [
   {
     name: "Standards & Controls",
     image: "/images/category-reagents.PNG",
-    description: "Reference standards, controls, calibrators, and quality materials.",
+    description:
+      "Reference standards, controls, calibrators, and quality materials.",
   },
   {
     name: "Agricultural Biotechnology",
@@ -107,94 +111,70 @@ export default function HomepageMarketplace({
   listings: HomepageListing[];
   errorMessage?: string | null;
 }) {
-  const [searchTerm, setSearchTerm] = useState("");
+  const router = useRouter();
 
-  const filteredListings = useMemo(() => {
-    const normalizedSearch = searchTerm.trim().toLowerCase();
+  function handleSearch(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
 
-    if (!normalizedSearch) {
-      return listings;
+    const formData = new FormData(event.currentTarget);
+    const query = String(formData.get("q") || "").trim();
+
+    if (!query) {
+      router.push("/listings");
+      return;
     }
 
-    return listings.filter((listing) => {
-      const searchableText = [
-        listing.title,
-        listing.category,
-        listing.condition,
-        listing.country,
-        listing.city,
-        listing.description,
-        listing.brand,
-        listing.price_currency,
-      ]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase();
-
-      return searchableText.includes(normalizedSearch);
-    });
-  }, [listings, searchTerm]);
-
-  function searchCategory(categoryName: string) {
-    setSearchTerm(categoryName);
-
-    setTimeout(() => {
-      document
-        .getElementById("listings")
-        ?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }, 100);
+    router.push(`/search?q=${encodeURIComponent(query)}`);
   }
+
+  function openCategory(categoryName: string) {
+    router.push(`/search?q=${encodeURIComponent(categoryName)}`);
+  }
+
+  const latestListings = listings.slice(0, 8);
 
   return (
     <>
       <section id="search" className="mx-auto max-w-7xl px-6 pt-12">
         <div className="rounded-[2rem] border border-emerald-100 bg-white p-6 shadow-sm">
-          <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-            <div>
-              <p className="mb-2 text-sm font-black uppercase tracking-wide text-emerald-700">
-                Search marketplace
-              </p>
+          <form onSubmit={handleSearch}>
+            <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+              <div>
+                <p className="mb-2 text-sm font-black uppercase tracking-wide text-emerald-700">
+                  Search marketplace
+                </p>
 
-              <h2 className="text-3xl font-black">Search LabFinds</h2>
+                <h2 className="text-3xl font-black">Search LabFinds</h2>
 
-              <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-                Search by product name, category, city, country, brand, or keyword.
-              </p>
-            </div>
-
-            <div className="w-full max-w-2xl">
-              <label className="mb-2 block text-sm font-black text-slate-700">
-                Keyword search
-              </label>
-
-              <div className="flex gap-3">
-                <input
-                  type="search"
-                  value={searchTerm}
-                  onChange={(event) => setSearchTerm(event.target.value)}
-                  placeholder="Search qPCR, PCR, extraction, equipment, Cairo..."
-                  className="w-full rounded-2xl border border-slate-300 bg-white px-5 py-4 font-semibold outline-none transition focus:border-emerald-700 focus:ring-4 focus:ring-emerald-50"
-                />
-
-                {searchTerm && (
-                  <button
-                    type="button"
-                    onClick={() => setSearchTerm("")}
-                    className="rounded-2xl border border-slate-200 bg-white px-5 py-4 font-black text-slate-700 shadow-sm hover:border-emerald-600"
-                  >
-                    Clear
-                  </button>
-                )}
+                <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+                  Search by product name, category, city, country, brand, or
+                  keyword.
+                </p>
               </div>
 
-              {searchTerm && (
-                <p className="mt-3 text-sm font-bold text-emerald-700">
-                  Showing {filteredListings.length} result
-                  {filteredListings.length === 1 ? "" : "s"} for “{searchTerm}”
-                </p>
-              )}
+              <div className="w-full max-w-2xl">
+                <label className="mb-2 block text-sm font-black text-slate-700">
+                  Keyword search
+                </label>
+
+                <div className="flex flex-col gap-3 md:flex-row">
+                  <input
+                    name="q"
+                    type="search"
+                    placeholder="Search qPCR, PCR, extraction, equipment, Cairo..."
+                    className="w-full rounded-2xl border border-slate-300 bg-white px-5 py-4 font-semibold outline-none transition focus:border-emerald-700 focus:ring-4 focus:ring-emerald-50"
+                  />
+
+                  <button
+                    type="submit"
+                    className="rounded-2xl bg-emerald-700 px-8 py-4 font-black text-white hover:bg-emerald-800"
+                  >
+                    Search
+                  </button>
+                </div>
+              </div>
             </div>
-          </div>
+          </form>
         </div>
       </section>
 
@@ -208,9 +188,9 @@ export default function HomepageMarketplace({
             <h2 className="text-3xl font-black">Shop by Category</h2>
           </div>
 
-          <a href="#listings" className="font-bold text-emerald-700">
+          <Link href="/listings" className="font-bold text-emerald-700">
             View listings →
-          </a>
+          </Link>
         </div>
 
         <div className="grid gap-5 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
@@ -218,7 +198,7 @@ export default function HomepageMarketplace({
             <button
               key={category.name}
               type="button"
-              onClick={() => searchCategory(category.name)}
+              onClick={() => openCategory(category.name)}
               className="group overflow-hidden rounded-3xl border border-slate-200 bg-white text-left shadow-sm transition hover:-translate-y-1 hover:border-emerald-300 hover:shadow-xl"
             >
               <div className="flex h-40 items-center justify-center bg-gradient-to-br from-emerald-50 to-slate-50 p-6">
@@ -252,10 +232,16 @@ export default function HomepageMarketplace({
 
       <section id="listings" className="mx-auto max-w-7xl px-6 py-8">
         <div className="mb-5 flex items-center justify-between">
-          <h2 className="text-2xl font-black">Latest Listings</h2>
+          <div>
+            <h2 className="text-2xl font-black">Latest Listings</h2>
 
-          <Link href="/add-listing" className="font-bold text-emerald-700">
-            Add listing →
+            <p className="mt-2 text-sm text-slate-600">
+              Latest approved LabFinds listings.
+            </p>
+          </div>
+
+          <Link href="/listings" className="font-bold text-emerald-700">
+            Browse all listings →
           </Link>
         </div>
 
@@ -264,11 +250,13 @@ export default function HomepageMarketplace({
             <p className="rounded-2xl bg-red-50 p-5 font-bold text-red-700">
               Database error: {errorMessage}
             </p>
-          ) : filteredListings.length > 0 ? (
-            filteredListings.map((listing) => (
+          ) : latestListings.length > 0 ? (
+            latestListings.map((listing) => (
               <ListingCard
                 key={listing.id}
                 id={listing.id}
+                sellerId={listing.seller_id}
+                sellerPhone={listing.seller_phone}
                 title={listing.title || "Untitled listing"}
                 category={`${listing.category || "General"} · ${
                   listing.country || "Country not set"
@@ -281,15 +269,6 @@ export default function HomepageMarketplace({
                 status={listing.status || "approved"}
               />
             ))
-          ) : searchTerm ? (
-            <div className="rounded-3xl bg-white p-8 shadow-sm md:col-span-2 lg:col-span-4">
-              <h3 className="text-2xl font-black">No matching listings</h3>
-
-              <p className="mt-3 max-w-2xl text-slate-600">
-                No approved listings match “{searchTerm}”. Try another keyword
-                like PCR, qPCR, extraction, primers, equipment, or your city.
-              </p>
-            </div>
           ) : (
             <div className="rounded-3xl bg-white p-8 shadow-sm md:col-span-2 lg:col-span-4">
               <h3 className="text-2xl font-black">No approved listings yet</h3>

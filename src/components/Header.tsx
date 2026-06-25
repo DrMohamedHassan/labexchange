@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import NotificationBell from "@/components/NotificationBell";
 
 type UserRole = "seller" | "admin" | null;
 
@@ -89,7 +88,7 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/95 backdrop-blur">
-      <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-6 py-4">
+      <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-6 py-4">
         <Link href="/" className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-emerald-200 bg-emerald-50 text-sm font-black text-emerald-800">
             LF
@@ -100,10 +99,10 @@ export default function Header() {
           </span>
         </Link>
 
-        <nav className="hidden items-center gap-7 text-sm font-extrabold xl:flex">
-          <a href="/#listings" className="hover:text-emerald-700">
+        <nav className="hidden items-center gap-7 text-sm font-extrabold lg:flex">
+          <Link href="/listings" className="hover:text-emerald-700">
             Browse
-          </a>
+          </Link>
 
           <a href="/#categories" className="hover:text-emerald-700">
             Categories
@@ -125,8 +124,6 @@ export default function Header() {
             </span>
           ) : isLoggedIn ? (
             <>
-              <NotificationBell userRole={role} />
-
               {role === "admin" && (
                 <>
                   <Link
@@ -178,11 +175,11 @@ export default function Header() {
                   href="/verify-seller"
                   className={
                     isVerifiedSeller
-                      ? "hidden rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-bold text-emerald-700 md:inline-block"
-                      : "hidden rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-bold text-amber-700 hover:border-amber-500 md:inline-block"
+                      ? "rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-black text-emerald-700 hover:border-emerald-500"
+                      : "rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-black text-amber-700 hover:border-amber-500"
                   }
                 >
-                  {isVerifiedSeller ? "Verified Seller" : "Verify Seller"}
+                  {isVerifiedSeller ? "✅ Verified" : "🛡️ Verify Seller"}
                 </Link>
               )}
 
@@ -191,13 +188,6 @@ export default function Header() {
                 className="hidden rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold shadow-sm hover:border-emerald-600 md:inline-block"
               >
                 My Listings
-              </Link>
-
-              <Link
-                href="/contact"
-                className="hidden rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold shadow-sm hover:border-emerald-600 md:inline-block"
-              >
-                Contact
               </Link>
 
               <Link
@@ -232,10 +222,10 @@ export default function Header() {
               </Link>
 
               <Link
-                href="/contact"
-                className="hidden rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold shadow-sm hover:border-emerald-600 md:inline-block md:px-5 md:py-3"
+                href="/verify-seller"
+                className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-black text-amber-700 hover:border-amber-500"
               >
-                Contact
+                🛡️ Get Verified
               </Link>
 
               <Link

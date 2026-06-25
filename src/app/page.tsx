@@ -13,7 +13,7 @@ export default async function Home() {
   const { data, error } = await supabase
     .from("listings")
     .select(
-      "id, title, category, condition, country, city, description, brand, price, price_currency, image_url, product_image_url, status, sold_expires_at"
+      "id, seller_id, seller_phone, title, category, condition, country, city, description, brand, price, price_currency, image_url, product_image_url, status, sold_expires_at"
     )
     .in("status", ["approved", "sold"])
     .order("created_at", { ascending: false });
@@ -63,12 +63,19 @@ export default async function Home() {
                 Sell Your Items
               </Link>
 
-              <a
-                href="#listings"
+              <Link
+                href="/listings"
                 className="rounded-2xl border border-slate-200 bg-white px-6 py-4 font-bold hover:border-emerald-600"
               >
                 Browse Listings
-              </a>
+              </Link>
+
+              <Link
+                href="/verify-seller"
+                className="rounded-2xl border border-amber-200 bg-amber-50 px-6 py-4 font-black text-amber-700 hover:border-amber-500"
+              >
+                🛡️ Verify Seller
+              </Link>
 
               <Link
                 href="/contact"
