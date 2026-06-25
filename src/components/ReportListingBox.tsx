@@ -57,8 +57,8 @@ export default function ReportListingBox({ listingId }: { listingId: number }) {
         onClick={() => setIsOpen((current) => !current)}
         className="flex w-full items-center justify-between gap-4 text-left font-black text-red-800"
       >
-        <span>⚠️ Report this ad / الإبلاغ عن إعلان أو تقديم شكوى</span>
-        <span>{isOpen ? "−" : "+"}</span>
+        <span>âš ï¸ Report this ad / Ø§Ù„Ø¥Ø¨Ù„Ø§Øº Ø¹Ù† Ø¥Ø¹Ù„Ø§Ù† Ø£Ùˆ ØªÙ‚Ø¯ÙŠÙ… Ø´ÙƒÙˆÙ‰</span>
+        <span>{isOpen ? "âˆ’" : "+"}</span>
       </button>
 
       {isOpen && (
@@ -70,8 +70,8 @@ export default function ReportListingBox({ listingId }: { listingId: number }) {
           </p>
 
           <p className="mt-2 text-sm leading-6 text-red-800">
-            استخدم هذا النموذج للإبلاغ عن إعلان مضلل، شبهة احتيال، منتج محظور،
-            أو بيانات غير صحيحة. الشكوى تظهر للإدارة فقط.
+            Ø§Ø³ØªØ®Ø¯Ù… Ù‡Ø°Ø§ Ø§Ù„Ù†Ù…ÙˆØ°Ø¬ Ù„Ù„Ø¥Ø¨Ù„Ø§Øº Ø¹Ù† Ø¥Ø¹Ù„Ø§Ù† Ù…Ø¶Ù„Ù„ØŒ Ø´Ø¨Ù‡Ø© Ø§Ø­ØªÙŠØ§Ù„ØŒ Ù…Ù†ØªØ¬ Ù…Ø­Ø¸ÙˆØ±ØŒ
+            Ø£Ùˆ Ø¨ÙŠØ§Ù†Ø§Øª ØºÙŠØ± ØµØ­ÙŠØ­Ø©. Ø§Ù„Ø´ÙƒÙˆÙ‰ ØªØ¸Ù‡Ø± Ù„Ù„Ø¥Ø¯Ø§Ø±Ø© ÙÙ‚Ø·.
           </p>
 
           <form onSubmit={handleSubmit} className="mt-5 grid gap-4">

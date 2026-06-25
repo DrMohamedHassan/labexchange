@@ -189,11 +189,11 @@ export default function AdminContactMessagesPage() {
                   </h2>
 
                   <p className="mt-2 text-sm text-slate-500">
-                    From: {item.name} · {item.email}
+                    From: {item.name} Â· {item.email}
                   </p>
 
                   <p className="mt-1 text-sm text-slate-500">
-                    Country: {item.country || "-"} · Type: {item.message_type} ·{" "}
+                    Country: {item.country || "-"} Â· Type: {item.message_type} Â·{" "}
                     {new Date(item.created_at).toLocaleString()}
                   </p>
                 </div>

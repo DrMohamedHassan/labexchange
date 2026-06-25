@@ -197,11 +197,11 @@ export default function AdminPage() {
       listing.admin_feedback || feedbackDrafts[listing.id] || "";
 
     const subject = encodeURIComponent(
-      `LabExchange listing feedback: ${listing.title}`
+      `InterLab Hub listing feedback: ${listing.title}`
     );
 
     const body = encodeURIComponent(
-      `Hello ${listing.seller_name || "Seller"},\n\nYour listing "${listing.title}" needs changes before approval.\n\nAdmin feedback:\n${feedback}\n\nPlease edit your listing and resubmit it for review.\n\nRegards,\nLabExchange Admin`
+      `Hello ${listing.seller_name || "Seller"},\n\nYour listing "${listing.title}" needs changes before approval.\n\nAdmin feedback:\n${feedback}\n\nPlease edit your listing and resubmit it for review.\n\nRegards,\nInterLab Hub Admin`
     );
 
     return `mailto:${listing.seller_email}?subject=${subject}&body=${body}`;

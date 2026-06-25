@@ -182,7 +182,7 @@ export default function AdminVerificationsPage() {
                   </h2>
 
                   <p className="mt-1 text-sm text-slate-500">
-                    {user.email || "-"} · {user.phone || "-"} ·{" "}
+                    {user.email || "-"} Â· {user.phone || "-"} Â·{" "}
                     {user.city || "-"}
                   </p>
                 </div>

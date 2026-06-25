@@ -142,7 +142,7 @@ export default function AdminReviewsPage() {
                   </h2>
 
                   <p className="mt-1 text-sm text-slate-500">
-                    Buyer: {review.buyer_email || "-"} ·{" "}
+                    Buyer: {review.buyer_email || "-"} Â·{" "}
                     {new Date(review.created_at).toLocaleString()}
                   </p>
                 </div>
@@ -153,9 +153,9 @@ export default function AdminReviewsPage() {
               </div>
 
               <p className="mt-5 text-2xl font-black text-amber-500">
-                {"★".repeat(review.rating)}
+                {"â˜…".repeat(review.rating)}
                 <span className="text-slate-300">
-                  {"★".repeat(5 - review.rating)}
+                  {"â˜…".repeat(5 - review.rating)}
                 </span>
               </p>
 

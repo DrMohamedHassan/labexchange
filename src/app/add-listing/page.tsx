@@ -51,7 +51,7 @@ export default function AddListingPage() {
   const isUsedProduct = condition.toLowerCase().startsWith("used");
 
   useEffect(() => {
-    const savedCountry = localStorage.getItem("labexchange_country");
+    const savedCountry = localStorage.getItem("InterLab Hub_country");
 
     if (savedCountry) {
       setCountry(savedCountry);
@@ -201,7 +201,7 @@ export default function AddListingPage() {
         return;
       }
 
-      localStorage.setItem("labexchange_country", country);
+      localStorage.setItem("InterLab Hub_country", country);
 
       setMessage(
         "Listing submitted successfully. It will appear after admin approval."
@@ -225,7 +225,7 @@ export default function AddListingPage() {
 
       <div className="mx-auto max-w-4xl px-6 py-10">
         <Link href="/" className="mb-6 inline-block font-bold text-emerald-700">
-          ← Back to homepage
+          â† Back to homepage
         </Link>
 
         <div className="rounded-3xl bg-white p-8 shadow-sm">
@@ -335,7 +335,7 @@ export default function AddListingPage() {
               label="Storage Condition"
               value={storageCondition}
               onChange={setStorageCondition}
-              placeholder="Example: Stored at 2-8°C / room temperature"
+              placeholder="Example: Stored at 2-8Â°C / room temperature"
             />
 
             <div>
@@ -420,7 +420,7 @@ export default function AddListingPage() {
                 />
 
                 <MultipleFileField
-                  label="Additional Product Figures — maximum 3"
+                  label="Additional Product Figures â€” maximum 3"
                   onChange={handleProductFigures}
                 />
               </div>

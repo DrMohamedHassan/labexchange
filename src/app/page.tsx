@@ -68,7 +68,7 @@ export default async function Home() {
         <div className="mx-auto grid max-w-7xl gap-10 px-6 py-12 lg:grid-cols-[1fr_1.1fr] lg:items-center lg:py-16">
           <div>
             <p className="mb-4 inline-block rounded-full bg-emerald-50 px-4 py-2 text-sm font-black text-emerald-700">
-              Global LabExchange Beta
+              Global InterLab Hub Beta
             </p>
 
             <h1 className="max-w-xl text-4xl font-black leading-tight md:text-5xl lg:text-6xl">
@@ -124,7 +124,7 @@ export default async function Home() {
           <h2 className="text-2xl font-black">Shop by Category</h2>
 
           <a href="#listings" className="font-bold text-emerald-700">
-            View listings →
+            View listings â†’
           </a>
         </div>
 
@@ -149,7 +149,7 @@ export default async function Home() {
           <h2 className="text-2xl font-black">Latest Listings</h2>
 
           <Link href="/add-listing" className="font-bold text-emerald-700">
-            Add listing →
+            Add listing â†’
           </Link>
         </div>
 
@@ -162,7 +162,7 @@ export default async function Home() {
                 key={listing.id}
                 id={listing.id}
                 title={listing.title || "Untitled listing"}
-                category={`${listing.category || "General"} · ${
+                category={`${listing.category || "General"} Â· ${
                   listing.country || "Country not set"
                 }`}
                 condition={listing.condition || "Condition not provided"}
@@ -200,7 +200,7 @@ export default async function Home() {
                 Need help?
               </p>
 
-              <h2 className="text-3xl font-black">Contact LabExchange Admin</h2>
+              <h2 className="text-3xl font-black">Contact InterLab Hub Admin</h2>
 
               <p className="mt-4 max-w-2xl leading-7 text-slate-600">
                 Send enquiries, complaints, seller issues, buyer issues, fraud
@@ -220,11 +220,11 @@ export default async function Home() {
               <h3 className="font-black">Best for:</h3>
 
               <ul className="mt-4 grid gap-3 text-sm leading-6 text-slate-700">
-                <li>• Buyer or seller complaint</li>
-                <li>• Wrong country listing</li>
-                <li>• Fraud or safety concern</li>
-                <li>• Technical website problem</li>
-                <li>• Partnership or general enquiry</li>
+                <li>â€¢ Buyer or seller complaint</li>
+                <li>â€¢ Wrong country listing</li>
+                <li>â€¢ Fraud or safety concern</li>
+                <li>â€¢ Technical website problem</li>
+                <li>â€¢ Partnership or general enquiry</li>
               </ul>
             </div>
           </div>
@@ -234,7 +234,7 @@ export default async function Home() {
       <section className="mx-auto max-w-7xl px-6 pb-16 pt-4">
         <div className="rounded-[2rem] bg-gradient-to-r from-emerald-950 to-teal-800 p-8 text-white shadow-xl">
           <h2 className="text-2xl font-black">
-            LabExchange is expanding country by country
+            InterLab Hub is expanding country by country
           </h2>
 
           <p className="mt-3 max-w-3xl text-sm leading-6 text-emerald-50">

@@ -270,7 +270,7 @@ export default function MyListingsPage() {
                   <h2 className="mt-2 text-xl font-black">{listing.title}</h2>
 
                   <p className="mt-2 text-sm text-slate-500">
-                    {listing.brand || "No brand"} ·{" "}
+                    {listing.brand || "No brand"} Â·{" "}
                     {listing.quantity || "No quantity"}
                   </p>
 

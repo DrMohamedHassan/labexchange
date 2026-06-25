@@ -9,7 +9,7 @@ export default function CountryGate() {
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
-    const savedCountry = localStorage.getItem("labexchange_country");
+    const savedCountry = localStorage.getItem("InterLab Hub_country");
 
     if (savedCountry) {
       setSelectedCountry(savedCountry);
@@ -23,9 +23,9 @@ export default function CountryGate() {
 
   function saveCountry(country: string) {
     setSelectedCountry(country);
-    localStorage.setItem("labexchange_country", country);
+    localStorage.setItem("InterLab Hub_country", country);
     window.dispatchEvent(
-      new CustomEvent("labexchange-country-change", {
+      new CustomEvent("InterLab Hub-country-change", {
         detail: country,
       })
     );
@@ -89,7 +89,7 @@ export default function CountryGate() {
               onClick={() => saveCountry(selectedCountry)}
               className="mt-7 w-full rounded-2xl bg-slate-950 px-6 py-4 font-black text-white hover:bg-slate-800"
             >
-              Continue to LabExchange
+              Continue to InterLab Hub
             </button>
           </div>
         </div>

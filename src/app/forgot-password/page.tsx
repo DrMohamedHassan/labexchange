@@ -46,7 +46,7 @@ export default function ForgotPasswordPage() {
 
       <div className="mx-auto max-w-md px-6 py-10">
         <Link href="/login" className="mb-6 inline-block font-bold text-emerald-700">
-          ← Back to Login
+          â† Back to Login
         </Link>
 
         <div className="rounded-3xl bg-white p-8 shadow-sm">

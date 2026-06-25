@@ -17,7 +17,7 @@ export default function ContactPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    const savedCountry = localStorage.getItem("labexchange_country");
+    const savedCountry = localStorage.getItem("InterLab Hub_country");
 
     if (savedCountry) {
       setCountry(savedCountry);
@@ -89,12 +89,12 @@ export default function ContactPage() {
 
       <div className="mx-auto max-w-4xl px-6 py-10">
         <Link href="/" className="mb-6 inline-block font-bold text-emerald-700">
-          ← Back to homepage
+          â† Back to homepage
         </Link>
 
         <div className="rounded-3xl bg-white p-8 shadow-sm">
           <p className="mb-4 inline-block rounded-full bg-emerald-50 px-4 py-2 text-sm font-black text-emerald-700">
-            Contact LabExchange
+            Contact InterLab Hub
           </p>
 
           <h1 className="text-4xl font-black">Contact Us</h1>

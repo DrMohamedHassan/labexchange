@@ -129,7 +129,7 @@ export default function SellerReviewBox({
                 }
                 aria-label={`${star} star rating`}
               >
-                ★
+                â˜…
               </button>
             ))}
           </div>

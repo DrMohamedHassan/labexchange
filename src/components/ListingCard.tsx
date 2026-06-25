@@ -64,7 +64,7 @@ export default function ListingCard({
 
         <div className="mt-4 flex items-center justify-between text-sm text-slate-700">
           <span>{city || "City not provided"}</span>
-          <span>♡</span>
+          <span>â™¡</span>
         </div>
 
         <p className="mt-4 text-lg font-black text-slate-950">

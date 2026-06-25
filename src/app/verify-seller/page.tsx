@@ -203,7 +203,7 @@ export default function VerifySellerPage() {
 
       <div className="mx-auto max-w-3xl px-6 py-10">
         <Link href="/" className="mb-6 inline-block font-bold text-emerald-700">
-          ← Back to homepage
+          â† Back to homepage
         </Link>
 
         <div className="rounded-3xl bg-white p-8 shadow-sm">
@@ -216,8 +216,8 @@ export default function VerifySellerPage() {
           </p>
 
           <p className="mt-3 leading-7 text-slate-600">
-            هذه الخطوة اختيارية، لكنها تزيد ثقة المشتري. مستند الهوية خاص ولن
-            يظهر للعامة، وسيتم مراجعته من الإدارة فقط.
+            Ù‡Ø°Ù‡ Ø§Ù„Ø®Ø·ÙˆØ© Ø§Ø®ØªÙŠØ§Ø±ÙŠØ©ØŒ Ù„ÙƒÙ†Ù‡Ø§ ØªØ²ÙŠØ¯ Ø«Ù‚Ø© Ø§Ù„Ù…Ø´ØªØ±ÙŠ. Ù…Ø³ØªÙ†Ø¯ Ø§Ù„Ù‡ÙˆÙŠØ© Ø®Ø§Øµ ÙˆÙ„Ù†
+            ÙŠØ¸Ù‡Ø± Ù„Ù„Ø¹Ø§Ù…Ø©ØŒ ÙˆØ³ÙŠØªÙ… Ù…Ø±Ø§Ø¬Ø¹ØªÙ‡ Ù…Ù† Ø§Ù„Ø¥Ø¯Ø§Ø±Ø© ÙÙ‚Ø·.
           </p>
 
           <div className="mt-6 rounded-2xl bg-slate-50 p-5">
@@ -225,7 +225,7 @@ export default function VerifySellerPage() {
 
             <p className="mt-2 capitalize text-slate-700">
               {profile?.is_verified_seller
-                ? "Approved — Verified Seller"
+                ? "Approved â€” Verified Seller"
                 : profile?.verification_status || "Not requested"}
             </p>
 

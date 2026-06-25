@@ -8,14 +8,14 @@ export default function PoliciesPage() {
 
       <div className="mx-auto max-w-4xl px-6 py-10">
         <Link href="/" className="mb-6 inline-block font-bold text-emerald-700">
-          ← Back to homepage
+          â† Back to homepage
         </Link>
 
         <div className="rounded-3xl bg-white p-8 shadow-sm">
           <h1 className="text-4xl font-black">Website Policies</h1>
 
           <p className="mt-4 text-slate-600">
-            These policies explain how LabExchange works as an online listing
+            These policies explain how InterLab Hub works as an online listing
             platform between buyers and sellers.
           </p>
 
@@ -112,8 +112,8 @@ export default function PoliciesPage() {
               payment.
             </p>
             <p>
-              ننصح المشتري بمقابلة البائع في مكان آمن وموثوق مثل مركز بحثي،
-              معمل، جامعة، أو مكان عمل رسمي، وفحص المنتج والمستندات قبل الدفع.
+              Ù†Ù†ØµØ­ Ø§Ù„Ù…Ø´ØªØ±ÙŠ Ø¨Ù…Ù‚Ø§Ø¨Ù„Ø© Ø§Ù„Ø¨Ø§Ø¦Ø¹ ÙÙŠ Ù…ÙƒØ§Ù† Ø¢Ù…Ù† ÙˆÙ…ÙˆØ«ÙˆÙ‚ Ù…Ø«Ù„ Ù…Ø±ÙƒØ² Ø¨Ø­Ø«ÙŠØŒ
+              Ù…Ø¹Ù…Ù„ØŒ Ø¬Ø§Ù…Ø¹Ø©ØŒ Ø£Ùˆ Ù…ÙƒØ§Ù† Ø¹Ù…Ù„ Ø±Ø³Ù…ÙŠØŒ ÙˆÙØ­Øµ Ø§Ù„Ù…Ù†ØªØ¬ ÙˆØ§Ù„Ù…Ø³ØªÙ†Ø¯Ø§Øª Ù‚Ø¨Ù„ Ø§Ù„Ø¯ÙØ¹.
             </p>
           </PolicySection>
         </div>

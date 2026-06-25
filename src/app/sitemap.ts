@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const siteUrl = "https://labexchange.vercel.app";
+  const siteUrl = "https://interlab-hub.vercel.app";
 
   return [
     {
@@ -12,6 +12,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
     {
       url: `${siteUrl}/policies`,
+      lastModified: new Date(),
+      changeFrequency: "monthly",
+      priority: 0.7,
+    },
+    {
+      url: `${siteUrl}/contact`,
       lastModified: new Date(),
       changeFrequency: "monthly",
       priority: 0.7,

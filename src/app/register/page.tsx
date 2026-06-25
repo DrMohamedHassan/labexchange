@@ -103,7 +103,7 @@ export default function RegisterPage() {
     <main className="min-h-screen bg-slate-50 px-6 py-10 text-slate-950">
       <div className="mx-auto max-w-md">
         <Link href="/" className="mb-6 inline-block font-bold text-emerald-700">
-          ← Back to homepage
+          â† Back to homepage
         </Link>
 
         <div className="rounded-3xl bg-white p-8 shadow-sm">
@@ -244,7 +244,7 @@ function Input({
 function PasswordRule({ ok, text }: { ok: boolean; text: string }) {
   return (
     <p className={ok ? "mt-1 font-bold text-emerald-700" : "mt-1 text-slate-500"}>
-      {ok ? "✓" : "•"} {text}
+      {ok ? "âœ“" : "â€¢"} {text}
     </p>
   );
 }

@@ -43,13 +43,7 @@ export default function Header() {
         if (!isMounted) return;
 
         setIsLoggedIn(true);
-
-        if (profile?.role === "admin") {
-          setRole("admin");
-        } else {
-          setRole("seller");
-        }
-
+        setRole(profile?.role === "admin" ? "admin" : "seller");
         setIsVerifiedSeller(Boolean(profile?.is_verified_seller));
         setLoading(false);
       } catch (error) {
@@ -97,11 +91,11 @@ export default function Header() {
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-6 py-4">
         <Link href="/" className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-emerald-200 bg-emerald-50 text-sm font-black text-emerald-800">
-            LX
+            IH
           </div>
 
           <span className="text-xl font-black md:text-2xl">
-            Lab<span className="text-emerald-700">Exchange</span>
+            InterLab<span className="text-emerald-700"> Hub</span>
           </span>
         </Link>
 
