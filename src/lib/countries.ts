@@ -40,3 +40,27 @@ export const COUNTRY_OPTIONS = [
 ] as const;
 
 export const DEFAULT_COUNTRY = "Egypt";
+
+export const ARABIC_SPEAKING_COUNTRIES = [
+  "Egypt",
+  "Saudi Arabia",
+  "United Arab Emirates",
+  "Qatar",
+  "Kuwait",
+  "Bahrain",
+  "Oman",
+  "Jordan",
+  "Lebanon",
+  "Iraq",
+  "Morocco",
+  "Tunisia",
+  "Algeria",
+] as const;
+
+export function shouldShowArabicForCountry(country?: string | null) {
+  if (!country) return false;
+
+  return ARABIC_SPEAKING_COUNTRIES.includes(
+    country as (typeof ARABIC_SPEAKING_COUNTRIES)[number]
+  );
+}

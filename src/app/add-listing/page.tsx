@@ -31,6 +31,7 @@ export default function AddListingPage() {
   const [sellerPhone, setSellerPhone] = useState("");
 
   const [productImage, setProductImage] = useState<File | null>(null);
+  const [productFigures, setProductFigures] = useState<File[]>([]);
   const [voucherImage, setVoucherImage] = useState<File | null>(null);
   const [proofImage, setProofImage] = useState<File | null>(null);
 
@@ -56,6 +57,24 @@ export default function AddListingPage() {
       setCountry(savedCountry);
     }
   }, []);
+
+  function handleProductFigures(files: FileList | null) {
+    if (!files) {
+      setProductFigures([]);
+      return;
+    }
+
+    const selectedFiles = Array.from(files);
+
+    if (selectedFiles.length > 3) {
+      setMessage("You can upload maximum 3 additional product figures.");
+      setProductFigures(selectedFiles.slice(0, 3));
+      return;
+    }
+
+    setMessage("");
+    setProductFigures(selectedFiles);
+  }
 
   async function uploadListingFile(file: File, folder: string) {
     const fileExtension = file.name.split(".").pop();
@@ -90,7 +109,12 @@ export default function AddListingPage() {
     }
 
     if (!productImage) {
-      setMessage("Please upload a real product image.");
+      setMessage("Please upload a real main product image.");
+      return;
+    }
+
+    if (productFigures.length > 3) {
+      setMessage("You can upload maximum 3 additional product figures.");
       return;
     }
 
@@ -120,6 +144,10 @@ export default function AddListingPage() {
       }
 
       const productImageUrl = await uploadListingFile(productImage, "products");
+
+      const figureUrls = await Promise.all(
+        productFigures.map((file) => uploadListingFile(file, "product-figures"))
+      );
 
       let voucherImageUrl: string | null = null;
       let proofImageUrl: string | null = null;
@@ -152,6 +180,9 @@ export default function AddListingPage() {
         seller_phone: sellerPhone,
         image_url: productImageUrl,
         product_image_url: productImageUrl,
+        product_figure_1_url: figureUrls[0] || null,
+        product_figure_2_url: figureUrls[1] || null,
+        product_figure_3_url: figureUrls[2] || null,
         voucher_image_url: voucherImageUrl,
         proof_image_url: proofImageUrl,
         seller_terms_accepted: sellerTermsAccepted,
@@ -374,12 +405,34 @@ export default function AddListingPage() {
               </div>
             )}
 
-            <div className="grid gap-5 md:grid-cols-3">
-              <FileField
-                label="Real Product Image *"
-                onChange={setProductImage}
-              />
+            <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
+              <h2 className="font-black">Product Images</h2>
 
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                Upload one required main product image, and up to 3 additional
+                figures. Allowed formats: PNG, JPG, WEBP.
+              </p>
+
+              <div className="mt-5 grid gap-5 md:grid-cols-2">
+                <FileField
+                  label="Main Product Image *"
+                  onChange={setProductImage}
+                />
+
+                <MultipleFileField
+                  label="Additional Product Figures — maximum 3"
+                  onChange={handleProductFigures}
+                />
+              </div>
+
+              {productFigures.length > 0 && (
+                <p className="mt-4 rounded-2xl bg-white p-4 text-sm font-bold text-slate-700">
+                  Selected additional figures: {productFigures.length} / 3
+                </p>
+              )}
+            </div>
+
+            <div className="grid gap-5 md:grid-cols-2">
               <FileField
                 label="Voucher / Invoice Optional"
                 onChange={setVoucherImage}
@@ -409,7 +462,7 @@ export default function AddListingPage() {
               <CheckField
                 checked={sellerTermsAccepted}
                 onChange={setSellerTermsAccepted}
-                text="I accept LabExchange policies and agree that admin can reject or remove unsafe listings."
+                text="I accept platform policies and agree that admin can reject or remove unsafe listings."
               />
 
               <Link
@@ -483,6 +536,28 @@ function FileField({
         type="file"
         accept="image/png,image/jpeg,image/webp"
         onChange={(event) => onChange(event.target.files?.[0] || null)}
+        className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none focus:border-emerald-700"
+      />
+    </div>
+  );
+}
+
+function MultipleFileField({
+  label,
+  onChange,
+}: {
+  label: string;
+  onChange: (files: FileList | null) => void;
+}) {
+  return (
+    <div>
+      <label className="mb-2 block font-bold">{label}</label>
+
+      <input
+        type="file"
+        multiple
+        accept="image/png,image/jpeg,image/webp"
+        onChange={(event) => onChange(event.target.files)}
         className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none focus:border-emerald-700"
       />
     </div>

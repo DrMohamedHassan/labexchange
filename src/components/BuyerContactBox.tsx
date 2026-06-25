@@ -3,17 +3,21 @@
 import { useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
+import { shouldShowArabicForCountry } from "@/lib/countries";
 
 export default function BuyerContactBox({
   whatsappLink,
   isSold,
   listingId,
+  country,
 }: {
   whatsappLink: string;
   isSold: boolean;
   listingId: number;
+  country?: string | null;
 }) {
   const [accepted, setAccepted] = useState(false);
+  const showArabic = shouldShowArabicForCountry(country);
 
   async function trackWhatsAppClick() {
     const {
@@ -27,6 +31,7 @@ export default function BuyerContactBox({
       user_id: user?.id || null,
       metadata: {
         source: "listing_details_contact_button",
+        country: country || null,
       },
     });
   }
@@ -37,9 +42,16 @@ export default function BuyerContactBox({
         <p className="font-black">This product has been marked as sold.</p>
 
         <p className="mt-2 text-sm">
-          This advertisement is kept temporarily for transparency and may be
-          removed later.
+          This advertisement is kept temporarily for transparency and buyer
+          review.
         </p>
+
+        {showArabic && (
+          <p className="mt-2 text-sm">
+            تم وضع علامة على هذا المنتج كمنتج مباع، وسيبقى الإعلان مؤقتًا
+            للشفافية وإتاحة مراجعة المشتري.
+          </p>
+        )}
       </div>
     );
   }
@@ -55,11 +67,13 @@ export default function BuyerContactBox({
         seller identity before payment.
       </p>
 
-      <p className="mt-3 text-sm leading-6 text-amber-900">
-        من أجل سلامتك، الأفضل مقابلة البائع في مكان آمن وموثوق مثل مركز بحثي،
-        معمل، جامعة، أو مكان عمل رسمي. تأكد من حالة المنتج، تاريخ الصلاحية،
-        التخزين، المستندات، وهوية البائع قبل الدفع.
-      </p>
+      {showArabic && (
+        <p className="mt-3 text-sm leading-6 text-amber-900">
+          من أجل سلامتك، الأفضل مقابلة البائع في مكان آمن وموثوق مثل مركز بحثي،
+          معمل، جامعة، أو مكان عمل رسمي. تأكد من حالة المنتج، تاريخ الصلاحية،
+          التخزين، المستندات، وهوية البائع قبل الدفع.
+        </p>
+      )}
 
       <label className="mt-5 flex gap-3 text-sm leading-6 text-amber-950">
         <input
@@ -72,8 +86,14 @@ export default function BuyerContactBox({
         <span>
           I understand that the website is only a platform and intermediary. I
           am responsible for checking the product and completing the transaction
-          safely. أقر أن الموقع مجرد منصة ووسيط، وأنني مسؤول عن فحص المنتج
-          وإتمام المعاملة بأمان.{" "}
+          safely.
+          {showArabic && (
+            <>
+              {" "}
+              أقر أن الموقع مجرد منصة ووسيط، وأنني مسؤول عن فحص المنتج وإتمام
+              المعاملة بأمان.
+            </>
+          )}{" "}
           <Link href="/policies" className="font-bold underline">
             Read policies
           </Link>
