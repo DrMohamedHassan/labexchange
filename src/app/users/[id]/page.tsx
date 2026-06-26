@@ -1,3 +1,4 @@
+import AdminSellerVerificationButton from "@/components/AdminSellerVerificationButton";
 import Header from "@/components/Header";
 import ListingCard from "@/components/ListingCard";
 import Link from "next/link";
@@ -96,7 +97,7 @@ export default async function PublicSellerPage({ params }: SellerPageProps) {
       <section className="border-b border-slate-200 bg-white">
         <div className="mx-auto max-w-7xl px-6 py-10">
           <Link href="/listings" className="mb-6 inline-block font-bold text-emerald-700">
-            ← Back to listings
+            ← Back to items
           </Link>
 
           <div className="grid gap-8 rounded-[2rem] bg-slate-50 p-8 md:grid-cols-[140px_1fr] md:items-center">
@@ -127,6 +128,8 @@ export default async function PublicSellerPage({ params }: SellerPageProps) {
                     Not verified
                   </span>
                 )}
+
+                <AdminSellerVerificationButton sellerId={id} />
               </div>
 
               <p className="mt-3 text-lg leading-8 text-slate-600">
@@ -168,7 +171,7 @@ export default async function PublicSellerPage({ params }: SellerPageProps) {
                   id={listing.id}
                   sellerId={listing.seller_id}
                   sellerPhone={listing.seller_phone}
-                  title={listing.title || "Untitled listing"}
+                  title={listing.title || "Untitled item"}
                   category={`${listing.category || "General"} · ${
                     listing.country || "Country not set"
                   }`}
@@ -255,7 +258,7 @@ function SellerNotFound() {
             href="/listings"
             className="mt-6 inline-block font-bold text-emerald-700"
           >
-            ← Back to listings
+            ← Back to items
           </Link>
         </div>
       </div>

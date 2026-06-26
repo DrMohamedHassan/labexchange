@@ -1,7 +1,6 @@
 import BuyerContactBox from "@/components/BuyerContactBox";
 import Header from "@/components/Header";
 import ReportListingBox from "@/components/ReportListingBox";
-import SellerReviewBox from "@/components/SellerReviewBox";
 import Link from "next/link";
 import { formatPriceWithCurrency } from "@/lib/currencies";
 import { supabase } from "@/lib/supabase";
@@ -15,16 +14,13 @@ type ListingDetailsPageProps = {
 };
 
 type SellerProfile = {
+  id: string;
+  full_name: string | null;
+  organization: string | null;
+  country: string | null;
+  avatar_url: string | null;
   is_verified_seller: boolean | null;
   verification_status: string | null;
-};
-
-type SellerReview = {
-  id: number;
-  rating: number;
-  comment: string;
-  buyer_email: string | null;
-  created_at: string;
 };
 
 export default async function ListingDetailsPage({
@@ -54,29 +50,15 @@ export default async function ListingDetailsPage({
 
   if (listing.seller_id) {
     const { data: profileData } = await supabase
-      .from("profiles")
-      .select("is_verified_seller, verification_status")
+      .from("public_profiles")
+      .select(
+        "id, full_name, organization, country, avatar_url, is_verified_seller, verification_status"
+      )
       .eq("id", listing.seller_id)
       .maybeSingle();
 
     sellerProfile = profileData as SellerProfile | null;
   }
-
-  const { data: reviewsData } = await supabase
-    .from("seller_reviews")
-    .select("id, rating, comment, buyer_email, created_at")
-    .eq("seller_id", listing.seller_id)
-    .eq("status", "approved")
-    .order("created_at", { ascending: false })
-    .limit(5);
-
-  const sellerReviews = (reviewsData || []) as SellerReview[];
-
-  const averageRating =
-    sellerReviews.length > 0
-      ? sellerReviews.reduce((sum, review) => sum + review.rating, 0) /
-        sellerReviews.length
-      : null;
 
   const productImage =
     listing.product_image_url ||
@@ -105,8 +87,11 @@ export default async function ListingDetailsPage({
       <Header />
 
       <div className="mx-auto max-w-6xl px-6 py-10">
-        <Link href="/listings" className="mb-6 inline-block font-bold text-emerald-700">
-          ← Back to listings
+        <Link
+          href="/listings"
+          className="mb-6 inline-block font-bold text-emerald-700"
+        >
+          ← Back to items
         </Link>
 
         {isSold && (
@@ -114,8 +99,7 @@ export default async function ListingDetailsPage({
             <h2 className="text-xl font-black">This product has been sold</h2>
 
             <p className="mt-2 text-sm">
-              This advertisement is shown temporarily for transparency and buyer
-              review.
+              This advertisement is shown temporarily for transparency.
             </p>
           </div>
         )}
@@ -185,16 +169,6 @@ export default async function ListingDetailsPage({
               {formatPriceWithCurrency(listing.price, listing.price_currency)}
             </p>
 
-            {averageRating !== null && (
-              <div className="mt-4 rounded-2xl bg-amber-50 p-4 text-amber-900">
-                <p className="font-black">
-                  Seller rating: {averageRating.toFixed(1)} / 5 ★
-                </p>
-
-                <p className="mt-1 text-sm">Based on approved buyer reviews.</p>
-              </div>
-            )}
-
             <p className="mt-5 text-lg leading-8 text-slate-600">
               {listing.description || "No description added."}
             </p>
@@ -225,23 +199,49 @@ export default async function ListingDetailsPage({
               />
             </div>
 
-            {isVerifiedSeller ? (
-              <div className="mt-6 rounded-3xl bg-emerald-50 p-5 text-emerald-800">
-                <h2 className="font-black">Verified Seller</h2>
+            {sellerProfile && (
+              <Link
+                href={`/users/${sellerProfile.id}`}
+                className="mt-8 block rounded-3xl border border-emerald-100 bg-emerald-50 p-5 transition hover:border-emerald-400 hover:bg-emerald-100"
+              >
+                <div className="flex items-center gap-4">
+                  {sellerProfile.avatar_url ? (
+                    <img
+                      src={sellerProfile.avatar_url}
+                      alt={sellerProfile.full_name || "Seller"}
+                      className="h-16 w-16 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white text-2xl">
+                      👤
+                    </div>
+                  )}
 
-                <p className="mt-2 text-sm leading-6">
-                  This seller submitted verification documents reviewed by admin.
-                  Buyers should still inspect products before payment.
-                </p>
-              </div>
-            ) : (
-              <div className="mt-6 rounded-3xl bg-slate-50 p-5 text-slate-700">
-                <h2 className="font-black">Seller not ID verified yet</h2>
+                  <div>
+                    <p className="text-sm font-black uppercase tracking-wide text-emerald-700">
+                      Seller profile
+                    </p>
 
-                <p className="mt-2 text-sm leading-6">
-                  Please check product details carefully before any transaction.
-                </p>
-              </div>
+                    <h2 className="text-xl font-black">
+                      {sellerProfile.full_name || listing.seller_name || "Seller"}
+                    </h2>
+
+                    <p className="mt-1 text-sm font-bold text-slate-600">
+                      {sellerProfile.organization || "Organization not provided"}
+                    </p>
+
+                    {sellerProfile.is_verified_seller ? (
+                      <p className="mt-2 text-sm font-black text-emerald-700">
+                        ✅ Verified User
+                      </p>
+                    ) : (
+                      <p className="mt-2 text-sm font-black text-slate-500">
+                        Not verified
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </Link>
             )}
 
             {isUsedProduct && (
@@ -303,51 +303,11 @@ export default async function ListingDetailsPage({
               country={listing.country}
             />
 
-            <SellerReviewBox
-              listingId={Number(listing.id)}
-              sellerId={listing.seller_id || ""}
-              isSold={isSold}
-            />
-
-            <SellerReviewsList reviews={sellerReviews} />
-
             <ReportListingBox listingId={Number(listing.id)} />
           </div>
         </div>
       </div>
     </main>
-  );
-}
-
-function SellerReviewsList({ reviews }: { reviews: SellerReview[] }) {
-  return (
-    <div className="mt-8 rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-100">
-      <h2 className="text-xl font-black">Approved Seller Reviews</h2>
-
-      <div className="mt-5 grid gap-4">
-        {reviews.length > 0 ? (
-          reviews.map((review) => (
-            <div key={review.id} className="rounded-2xl bg-slate-50 p-4">
-              <p className="text-lg font-black text-amber-500">
-                {"★".repeat(review.rating)}
-                <span className="text-slate-300">
-                  {"★".repeat(5 - review.rating)}
-                </span>
-              </p>
-
-              <p className="mt-2 leading-7 text-slate-700">{review.comment}</p>
-
-              <p className="mt-3 text-xs font-bold text-slate-500">
-                {review.buyer_email || "Buyer"} ·{" "}
-                {new Date(review.created_at).toLocaleDateString()}
-              </p>
-            </div>
-          ))
-        ) : (
-          <p className="text-slate-500">No approved reviews yet.</p>
-        )}
-      </div>
-    </div>
   );
 }
 
@@ -369,7 +329,7 @@ function ListingNotFound() {
             href="/listings"
             className="mt-6 inline-block font-bold text-emerald-700"
           >
-            ← Back to listings
+            ← Back to items
           </Link>
         </div>
       </div>

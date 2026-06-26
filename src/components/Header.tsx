@@ -111,7 +111,7 @@ export default function Header() {
 
         <nav className="hidden items-center gap-7 text-sm font-extrabold lg:flex">
           <Link href="/listings" className="hover:text-emerald-700">
-            Browse
+            Buy Items
           </Link>
 
           <a href="/#categories" className="hover:text-emerald-700">
@@ -158,45 +158,27 @@ export default function Header() {
 
               {role === "admin" && (
                 <>
-                  <Link
-                    href="/admin"
-                    className="hidden rounded-xl border border-purple-200 bg-purple-50 px-4 py-2 text-sm font-bold text-purple-700 hover:border-purple-500 md:inline-block"
-                  >
+                  <Link href="/admin" className="hidden rounded-xl border border-purple-200 bg-purple-50 px-4 py-2 text-sm font-bold text-purple-700 hover:border-purple-500 md:inline-block">
                     Admin
                   </Link>
 
-                  <Link
-                    href="/admin/analytics"
-                    className="hidden rounded-xl border border-sky-200 bg-sky-50 px-4 py-2 text-sm font-bold text-sky-700 hover:border-sky-500 md:inline-block"
-                  >
+                  <Link href="/admin/analytics" className="hidden rounded-xl border border-sky-200 bg-sky-50 px-4 py-2 text-sm font-bold text-sky-700 hover:border-sky-500 md:inline-block">
                     Analytics
                   </Link>
 
-                  <Link
-                    href="/admin/reports"
-                    className="hidden rounded-xl border border-red-200 bg-red-50 px-4 py-2 text-sm font-bold text-red-700 hover:border-red-500 md:inline-block"
-                  >
+                  <Link href="/admin/reports" className="hidden rounded-xl border border-red-200 bg-red-50 px-4 py-2 text-sm font-bold text-red-700 hover:border-red-500 md:inline-block">
                     Reports
                   </Link>
 
-                  <Link
-                    href="/admin/contact-messages"
-                    className="hidden rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-bold text-indigo-700 hover:border-indigo-500 md:inline-block"
-                  >
+                  <Link href="/admin/contact-messages" className="hidden rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-bold text-indigo-700 hover:border-indigo-500 md:inline-block">
                     Messages
                   </Link>
 
-                  <Link
-                    href="/admin/reviews"
-                    className="hidden rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-bold text-amber-700 hover:border-amber-500 md:inline-block"
-                  >
+                  <Link href="/admin/reviews" className="hidden rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-bold text-amber-700 hover:border-amber-500 md:inline-block">
                     Reviews
                   </Link>
 
-                  <Link
-                    href="/admin/verifications"
-                    className="hidden rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-bold text-emerald-700 hover:border-emerald-500 md:inline-block"
-                  >
+                  <Link href="/admin/verifications" className="hidden rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-bold text-emerald-700 hover:border-emerald-500 md:inline-block">
                     Verifications
                   </Link>
                 </>
@@ -215,17 +197,11 @@ export default function Header() {
                 </Link>
               )}
 
-              <Link
-                href="/my-listings"
-                className="hidden rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold shadow-sm hover:border-emerald-600 md:inline-block"
-              >
+              <Link href="/my-listings" className="hidden rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold shadow-sm hover:border-emerald-600 md:inline-block">
                 My Listings
               </Link>
 
-              <Link
-                href="/add-listing"
-                className="rounded-xl bg-emerald-700 px-4 py-2 text-sm font-bold text-white shadow-sm hover:bg-emerald-800 md:px-5 md:py-3"
-              >
+              <Link href="/add-listing" className="rounded-xl bg-emerald-700 px-4 py-2 text-sm font-bold text-white shadow-sm hover:bg-emerald-800 md:px-5 md:py-3">
                 + List an Item
               </Link>
 
@@ -239,31 +215,19 @@ export default function Header() {
             </>
           ) : (
             <>
-              <Link
-                href="/login"
-                className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold shadow-sm hover:border-emerald-600 md:px-5 md:py-3"
-              >
+              <Link href="/login" className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold shadow-sm hover:border-emerald-600 md:px-5 md:py-3">
                 Login
               </Link>
 
-              <Link
-                href="/register"
-                className="hidden rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold shadow-sm hover:border-emerald-600 md:inline-block md:px-5 md:py-3"
-              >
+              <Link href="/register" className="hidden rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold shadow-sm hover:border-emerald-600 md:inline-block md:px-5 md:py-3">
                 Create Account
               </Link>
 
-              <Link
-                href="/verify-seller"
-                className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-black text-amber-700 hover:border-amber-500"
-              >
+              <Link href="/verify-seller" className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-black text-amber-700 hover:border-amber-500">
                 🛡️ Get Verified
               </Link>
 
-              <Link
-                href="/add-listing"
-                className="rounded-xl bg-emerald-700 px-4 py-2 text-sm font-bold text-white shadow-sm hover:bg-emerald-800 md:px-5 md:py-3"
-              >
+              <Link href="/add-listing" className="rounded-xl bg-emerald-700 px-4 py-2 text-sm font-bold text-white shadow-sm hover:bg-emerald-800 md:px-5 md:py-3">
                 + List an Item
               </Link>
             </>

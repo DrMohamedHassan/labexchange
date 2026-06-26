@@ -42,17 +42,18 @@ export default async function Home() {
               Global LabFinds Beta
             </p>
 
-            <h1 className="max-w-xl text-4xl font-black leading-tight md:text-5xl lg:text-6xl">
-              Find, buy, and sell{" "}
-              <span className="text-emerald-700">lab supplies</span>
+            <h1 className="max-w-2xl text-4xl font-black leading-tight md:text-5xl lg:text-6xl">
+              Buy and sell{" "}
+              <span className="text-emerald-700">used and unused</span>
               <br />
-              by country.
+              lab supplies with more confidence.
             </h1>
 
             <p className="mt-6 max-w-lg text-base leading-7 text-slate-700 md:text-lg md:leading-8">
               LabFinds helps labs, researchers, suppliers, and verified sellers
               list and discover reviewed lab supplies, reagents, consumables,
-              equipment, and biotechnology products by country.
+              equipment, and biotechnology products through admin-reviewed
+              listings, seller profiles, and buyer safety checks.
             </p>
 
             <div className="mt-8 flex flex-wrap gap-3">
@@ -65,9 +66,9 @@ export default async function Home() {
 
               <Link
                 href="/listings"
-                className="rounded-2xl border border-slate-200 bg-white px-6 py-4 font-bold hover:border-emerald-600"
+                className="rounded-2xl bg-slate-950 px-6 py-4 font-bold text-white hover:bg-slate-800"
               >
-                Browse Listings
+                Buy Items
               </Link>
 
               <Link
@@ -145,13 +146,13 @@ export default async function Home() {
       <section className="mx-auto max-w-7xl px-6 pb-16 pt-4">
         <div className="rounded-[2rem] bg-gradient-to-r from-emerald-950 to-teal-800 p-8 text-white shadow-xl">
           <h2 className="text-2xl font-black">
-            LabFinds is expanding country by country
+            LabFinds is built for safer lab-supply exchange
           </h2>
 
           <p className="mt-3 max-w-3xl text-sm leading-6 text-emerald-50">
-            Buyers and sellers should select the correct country before
-            browsing, selling, or contacting other users. Admin approval remains
-            mandatory for safety.
+            Buyers and sellers should check product identity, storage, expiry,
+            documents, and seller profile before completing any transaction.
+            Admin approval remains mandatory for public listings.
           </p>
         </div>
       </section>

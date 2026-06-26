@@ -188,8 +188,11 @@ export default function HomepageMarketplace({
             <h2 className="text-3xl font-black">Shop by Category</h2>
           </div>
 
-          <Link href="/listings" className="font-bold text-emerald-700">
-            View listings →
+          <Link
+            href="/listings"
+            className="rounded-2xl bg-slate-950 px-5 py-3 font-black text-white hover:bg-slate-800"
+          >
+            Buy Items →
           </Link>
         </div>
 
@@ -241,7 +244,7 @@ export default function HomepageMarketplace({
           </div>
 
           <Link href="/listings" className="font-bold text-emerald-700">
-            Browse all listings →
+            Buy all items →
           </Link>
         </div>
 
