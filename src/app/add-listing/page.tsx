@@ -14,13 +14,10 @@ import {
   PRICE_CURRENCY_OPTIONS,
 } from "@/lib/currencies";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
 export default function AddListingPage() {
-  const router = useRouter();
-
   const [title, setTitle] = useState("");
   const [brand, setBrand] = useState("");
   const [quantity, setQuantity] = useState("");
@@ -45,26 +42,33 @@ export default function AddListingPage() {
   const [usedVerificationAcknowledged, setUsedVerificationAcknowledged] =
     useState(false);
 
-  const [sellerTermsAccepted, setSellerTermsAccepted] = useState(false);
-  const [safetyAcknowledged, setSafetyAcknowledged] = useState(false);
-  const [
-    prohibitedItemsAcknowledged,
-    setProhibitedItemsAcknowledged,
-  ] = useState(false);
+  const [legalOwnership, setLegalOwnership] = useState(false);
+  const [notStolenContaminatedHazardous, setNotStolenContaminatedHazardous] =
+    useState(false);
+  const [regulatedDocuments, setRegulatedDocuments] = useState(false);
+  const [accuracyAcknowledged, setAccuracyAcknowledged] = useState(false);
+  const [adminRemovalAcknowledged, setAdminRemovalAcknowledged] = useState(false);
+  const [sellerResponsibility, setSellerResponsibility] = useState(false);
+
+  const [safetyNotProhibited, setSafetyNotProhibited] = useState(false);
+  const [safetyBuyerCheck, setSafetyBuyerCheck] = useState(false);
+  const [safetyPlatformPolicy, setSafetyPlatformPolicy] = useState(false);
 
   const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const isUsedProduct = condition.toLowerCase().startsWith("used");
 
-  useEffect(() => {
-    const savedCountry = localStorage.getItem("labfinds_country");
+  const allSellerLegalAccepted =
+    legalOwnership &&
+    notStolenContaminatedHazardous &&
+    regulatedDocuments &&
+    accuracyAcknowledged &&
+    adminRemovalAcknowledged &&
+    sellerResponsibility;
 
-    if (savedCountry) {
-      setCountry(savedCountry);
-      setPriceCurrency(getDefaultCurrencyForCountry(savedCountry));
-    }
-  }, []);
+  const allSafetyTermsAccepted =
+    safetyNotProhibited && safetyBuyerCheck && safetyPlatformPolicy;
 
   function handleCountryChange(newCountry: string) {
     setCountry(newCountry);
@@ -109,27 +113,11 @@ export default function AddListingPage() {
     return data.publicUrl;
   }
 
-  async function createNotificationForUser(
-    recipientId: string,
-    notificationTitle: string,
-    notificationMessage: string,
-    linkUrl: string
-  ) {
-    await supabase.from("notifications").insert({
-      recipient_id: recipientId,
-      recipient_role: null,
-      title: notificationTitle,
-      message: notificationMessage,
-      link_url: linkUrl,
-      is_read: false,
-    });
-  }
-
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     if (!title || !category || !condition || !country || !city || !price) {
-      setMessage("Please fill all required fields.");
+      setMessage("Please fill all required product fields.");
       return;
     }
 
@@ -144,7 +132,7 @@ export default function AddListingPage() {
     }
 
     if (!productImage) {
-      setMessage("Please upload a real main product image.");
+      setMessage("Please upload the main product image.");
       return;
     }
 
@@ -153,31 +141,31 @@ export default function AddListingPage() {
       return;
     }
 
-    if (
-      !sellerTermsAccepted ||
-      !safetyAcknowledged ||
-      !prohibitedItemsAcknowledged
-    ) {
-      setMessage("Please accept all safety and platform terms.");
-      return;
-    }
-
     if (isUsedProduct && !usedVerificationAcknowledged) {
       setMessage("Please confirm the used-product verification declaration.");
       return;
     }
 
+    if (!allSellerLegalAccepted) {
+      setMessage("Please accept all seller legal responsibility confirmations.");
+      return;
+    }
+
+    if (!allSafetyTermsAccepted) {
+      setMessage("Please accept all safety and platform terms.");
+      return;
+    }
+
     setIsSubmitting(true);
-    setMessage("Submitting listing...");
+    setMessage("Uploading images and submitting listing for admin review...");
 
     try {
       const {
         data: { user },
-        error: userError,
       } = await supabase.auth.getUser();
 
-      if (userError || !user) {
-        setMessage("Please login first before adding a listing.");
+      if (!user) {
+        setMessage("Please login first.");
         setIsSubmitting(false);
         return;
       }
@@ -192,11 +180,11 @@ export default function AddListingPage() {
       let proofImageUrl: string | null = null;
 
       if (voucherImage) {
-        voucherImageUrl = await uploadListingFile(voucherImage, "vouchers");
+        voucherImageUrl = await uploadListingFile(voucherImage, "documents");
       }
 
       if (proofImage) {
-        proofImageUrl = await uploadListingFile(proofImage, "proofs");
+        proofImageUrl = await uploadListingFile(proofImage, "documents");
       }
 
       const numericPrice = Number(price);
@@ -204,20 +192,21 @@ export default function AddListingPage() {
       const { error } = await supabase.from("listings").insert({
         seller_id: user.id,
         seller_email: user.email || null,
-        title,
-        brand,
-        quantity,
+        title: title.trim(),
+        brand: brand.trim() || null,
+        quantity: quantity.trim() || null,
         category,
         condition,
         country,
-        city,
+        city: city.trim(),
         price: Number.isNaN(numericPrice) ? null : numericPrice,
         price_currency: priceCurrency,
         expiry_date: expiryDate || null,
-        storage_condition: storageCondition,
-        description,
-        seller_name: sellerName,
-        seller_phone: sellerPhone,
+        storage_condition: storageCondition.trim() || null,
+        description: description.trim() || null,
+        seller_name: sellerName.trim(),
+        seller_phone: sellerPhone.trim(),
+        status: "pending",
         image_url: productImageUrl,
         product_image_url: productImageUrl,
         product_figure_1_url: figureUrls[0] || null,
@@ -225,14 +214,23 @@ export default function AddListingPage() {
         product_figure_3_url: figureUrls[2] || null,
         voucher_image_url: voucherImageUrl,
         proof_image_url: proofImageUrl,
-        seller_terms_accepted: sellerTermsAccepted,
-        safety_acknowledged: safetyAcknowledged,
-        prohibited_items_acknowledged: prohibitedItemsAcknowledged,
         used_verification_acknowledged: isUsedProduct
           ? usedVerificationAcknowledged
           : false,
-        used_verification_notes: isUsedProduct ? usedVerificationNotes : null,
-        status: "pending",
+        used_verification_notes: isUsedProduct
+          ? usedVerificationNotes.trim() || null
+          : null,
+        seller_legal_ownership_acknowledged: legalOwnership,
+        seller_not_stolen_contaminated_hazardous_acknowledged:
+          notStolenContaminatedHazardous,
+        seller_regulated_documents_acknowledged: regulatedDocuments,
+        seller_accuracy_acknowledged: accuracyAcknowledged,
+        seller_admin_removal_acknowledged: adminRemovalAcknowledged,
+        seller_responsibility_acknowledged: sellerResponsibility,
+        safety_not_prohibited_acknowledged: safetyNotProhibited,
+        safety_buyer_check_acknowledged: safetyBuyerCheck,
+        safety_platform_policy_acknowledged: safetyPlatformPolicy,
+        seller_legal_acknowledged_at: new Date().toISOString(),
       });
 
       if (error) {
@@ -241,27 +239,42 @@ export default function AddListingPage() {
         return;
       }
 
-      await createNotificationForUser(
-        user.id,
-        "Product submitted successfully",
-        "Your product was submitted successfully and is now waiting for admin review.",
-        "/my-listings"
-      );
-
-      localStorage.setItem("labfinds_country", country);
+      setTitle("");
+      setBrand("");
+      setQuantity("");
+      setCategory(DEFAULT_LISTING_CATEGORY);
+      setCondition(DEFAULT_CONDITION);
+      setCountry(DEFAULT_COUNTRY);
+      setCity("");
+      setPrice("");
+      setPriceCurrency(DEFAULT_PRICE_CURRENCY);
+      setExpiryDate("");
+      setStorageCondition("");
+      setDescription("");
+      setSellerName("");
+      setSellerPhone("");
+      setProductImage(null);
+      setProductFigures([]);
+      setVoucherImage(null);
+      setProofImage(null);
+      setUsedVerificationNotes("");
+      setUsedVerificationAcknowledged(false);
+      setLegalOwnership(false);
+      setNotStolenContaminatedHazardous(false);
+      setRegulatedDocuments(false);
+      setAccuracyAcknowledged(false);
+      setAdminRemovalAcknowledged(false);
+      setSellerResponsibility(false);
+      setSafetyNotProhibited(false);
+      setSafetyBuyerCheck(false);
+      setSafetyPlatformPolicy(false);
 
       setMessage(
-        "Listing submitted successfully. It will appear after admin approval."
+        "Listing submitted successfully. It will appear publicly after admin approval."
       );
-
-      setTimeout(() => {
-        router.push("/my-listings");
-        router.refresh();
-      }, 1200);
+      setIsSubmitting(false);
     } catch (error) {
-      setMessage(
-        error instanceof Error ? error.message : "Something went wrong."
-      );
+      setMessage(error instanceof Error ? error.message : "Something went wrong.");
       setIsSubmitting(false);
     }
   }
@@ -276,11 +289,15 @@ export default function AddListingPage() {
         </Link>
 
         <div className="rounded-3xl bg-white p-8 shadow-sm">
-          <h1 className="text-4xl font-black">Add a Listing</h1>
+          <p className="mb-4 inline-block rounded-full bg-emerald-50 px-4 py-2 text-sm font-black text-emerald-700">
+            Seller listing form
+          </p>
 
-          <p className="mt-3 text-slate-600">
-            Add your lab item. It will be reviewed by admin before appearing
-            publicly.
+          <h1 className="text-4xl font-black">Sell Your Item</h1>
+
+          <p className="mt-3 leading-7 text-slate-600">
+            Add accurate product details. Every listing must be reviewed and
+            approved by admin before it appears publicly.
           </p>
 
           <form onSubmit={handleSubmit} className="mt-8 grid gap-6">
@@ -308,49 +325,28 @@ export default function AddListingPage() {
             </div>
 
             <div className="grid gap-5 md:grid-cols-2">
-              <div>
-                <label className="mb-2 block font-bold">Category *</label>
+              <SelectField
+                label="Category *"
+                value={category}
+                onChange={setCategory}
+                options={LISTING_CATEGORIES as unknown as string[]}
+              />
 
-                <select
-                  value={category}
-                  onChange={(event) => setCategory(event.target.value)}
-                  className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-emerald-700"
-                >
-                  {LISTING_CATEGORIES.map((item) => (
-                    <option key={item}>{item}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="mb-2 block font-bold">Condition *</label>
-
-                <select
-                  value={condition}
-                  onChange={(event) => setCondition(event.target.value)}
-                  className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-emerald-700"
-                >
-                  {CONDITION_OPTIONS.map((item) => (
-                    <option key={item}>{item}</option>
-                  ))}
-                </select>
-              </div>
+              <SelectField
+                label="Condition *"
+                value={condition}
+                onChange={setCondition}
+                options={CONDITION_OPTIONS as unknown as string[]}
+              />
             </div>
 
             <div className="grid gap-5 md:grid-cols-2">
-              <div>
-                <label className="mb-2 block font-bold">Country *</label>
-
-                <select
-                  value={country}
-                  onChange={(event) => handleCountryChange(event.target.value)}
-                  className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-emerald-700"
-                >
-                  {COUNTRY_OPTIONS.map((item) => (
-                    <option key={item}>{item}</option>
-                  ))}
-                </select>
-              </div>
+              <SelectField
+                label="Country *"
+                value={country}
+                onChange={handleCountryChange}
+                options={COUNTRY_OPTIONS as unknown as string[]}
+              />
 
               <InputField
                 label="City *"
@@ -408,7 +404,7 @@ export default function AddListingPage() {
 
               <textarea
                 rows={6}
-                placeholder="Describe the product condition, storage, expiry, reason for selling, and important notes."
+                placeholder="Describe product condition, storage, expiry, reason for selling, and important notes."
                 value={description}
                 onChange={(event) => setDescription(event.target.value)}
                 className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-emerald-700"
@@ -452,30 +448,20 @@ export default function AddListingPage() {
                   className="mt-4 w-full rounded-2xl border border-amber-200 bg-white px-4 py-3 outline-none focus:border-amber-600"
                 />
 
-                <label className="mt-4 flex gap-3 text-sm leading-6 text-amber-950">
-                  <input
-                    type="checkbox"
-                    checked={usedVerificationAcknowledged}
-                    onChange={(event) =>
-                      setUsedVerificationAcknowledged(event.target.checked)
-                    }
-                    className="mt-1"
-                  />
-
-                  <span>
-                    I confirm that I described the used product condition
-                    honestly and clearly.
-                  </span>
-                </label>
+                <CheckboxField
+                  checked={usedVerificationAcknowledged}
+                  onChange={setUsedVerificationAcknowledged}
+                  label="I confirm that I described the used product condition honestly and clearly."
+                />
               </div>
             )}
 
             <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
-              <h2 className="font-black">Product Images</h2>
+              <h2 className="text-xl font-black">Product Images</h2>
 
               <p className="mt-2 text-sm leading-6 text-slate-600">
-                Upload one required main product image, and up to 3 additional
-                figures. Allowed formats: PNG, JPG, WEBP.
+                Upload a clear main product image. You may also add up to 3
+                additional product figures.
               </p>
 
               <div className="mt-5 grid gap-5 md:grid-cols-2">
@@ -492,47 +478,104 @@ export default function AddListingPage() {
 
               {productFigures.length > 0 && (
                 <p className="mt-4 rounded-2xl bg-white p-4 text-sm font-bold text-slate-700">
-                  Selected additional figures: {productFigures.length} / 3
+                  Selected product figures: {productFigures.length} / 3
                 </p>
               )}
             </div>
 
             <div className="grid gap-5 md:grid-cols-2">
               <FileField
-                label="Voucher / Invoice Optional"
+                label="Optional purchase voucher / invoice / ownership proof"
                 onChange={setVoucherImage}
               />
 
               <FileField
-                label="Scientific Proof Optional"
+                label="Optional scientific, regulatory, or product document"
                 onChange={setProofImage}
               />
             </div>
 
-            <div className="rounded-3xl bg-slate-50 p-5">
-              <h2 className="font-black">Safety and platform terms</h2>
+            <div className="rounded-3xl border border-red-200 bg-red-50 p-5">
+              <h2 className="text-xl font-black text-red-900">
+                Seller legal confirmations
+              </h2>
 
-              <CheckField
-                checked={prohibitedItemsAcknowledged}
-                onChange={setProhibitedItemsAcknowledged}
-                text="I confirm that this item is not prohibited, dangerous, illegal, or restricted."
-              />
+              <p className="mt-2 text-sm leading-6 text-red-900">
+                You must accept all confirmations before submitting the listing.
+              </p>
 
-              <CheckField
-                checked={safetyAcknowledged}
-                onChange={setSafetyAcknowledged}
-                text="I understand that buyers must check the product before payment and the website is only an intermediary platform."
-              />
+              <div className="mt-5 grid gap-4">
+                <CheckboxField
+                  checked={legalOwnership}
+                  onChange={setLegalOwnership}
+                  label="I confirm I legally own this item or have authority to sell it."
+                />
 
-              <CheckField
-                checked={sellerTermsAccepted}
-                onChange={setSellerTermsAccepted}
-                text="I accept platform policies and agree that admin can reject or remove unsafe listings."
-              />
+                <CheckboxField
+                  checked={notStolenContaminatedHazardous}
+                  onChange={setNotStolenContaminatedHazardous}
+                  label="I confirm this item is not stolen, contaminated, expired, prohibited, or hazardous."
+                />
+
+                <CheckboxField
+                  checked={regulatedDocuments}
+                  onChange={setRegulatedDocuments}
+                  label="I confirm this item is not a medical device, diagnostic kit, IVD, chemical, biological material, drug, or regulated product unless I upload valid legal documents."
+                />
+
+                <CheckboxField
+                  checked={accuracyAcknowledged}
+                  onChange={setAccuracyAcknowledged}
+                  label="I confirm all photos, price, condition, expiry, storage, and description are accurate."
+                />
+
+                <CheckboxField
+                  checked={adminRemovalAcknowledged}
+                  onChange={setAdminRemovalAcknowledged}
+                  label="I understand admin may reject, freeze, hide, or remove the listing."
+                />
+
+                <CheckboxField
+                  checked={sellerResponsibility}
+                  onChange={setSellerResponsibility}
+                  label="I accept that I am responsible for product accuracy and legal compliance."
+                />
+              </div>
+            </div>
+
+            <div className="rounded-3xl border border-amber-200 bg-amber-50 p-5">
+              <h2 className="text-xl font-black text-amber-900">
+                Safety and platform terms
+              </h2>
+
+              <p className="mt-2 text-sm leading-6 text-amber-900">
+                These platform safety terms are also required before submitting
+                your listing.
+              </p>
+
+              <div className="mt-5 grid gap-4">
+                <CheckboxField
+                  checked={safetyNotProhibited}
+                  onChange={setSafetyNotProhibited}
+                  label="I confirm that this item is not prohibited, dangerous, illegal, or restricted."
+                />
+
+                <CheckboxField
+                  checked={safetyBuyerCheck}
+                  onChange={setSafetyBuyerCheck}
+                  label="I understand that buyers must check the product before payment and the website is only an intermediary platform."
+                />
+
+                <CheckboxField
+                  checked={safetyPlatformPolicy}
+                  onChange={setSafetyPlatformPolicy}
+                  label="I accept platform policies and agree that admin can reject or remove unsafe listings."
+                />
+              </div>
 
               <Link
                 href="/policies"
-                className="mt-4 inline-block font-bold text-emerald-700 underline"
+                className="mt-5 inline-block rounded-2xl bg-white px-5 py-3 text-sm font-black text-amber-900 shadow-sm hover:bg-amber-100"
               >
                 Read policies
               </Link>
@@ -543,7 +586,7 @@ export default function AddListingPage() {
               disabled={isSubmitting}
               className="rounded-2xl bg-emerald-700 px-6 py-4 font-black text-white hover:bg-emerald-800 disabled:cursor-not-allowed disabled:bg-slate-400"
             >
-              {isSubmitting ? "Submitting..." : "Submit Listing for Review"}
+              {isSubmitting ? "Submitting..." : "Submit for Admin Review"}
             </button>
           </form>
 
@@ -586,6 +629,34 @@ function InputField({
   );
 }
 
+function SelectField({
+  label,
+  value,
+  onChange,
+  options,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  options: string[];
+}) {
+  return (
+    <div>
+      <label className="mb-2 block font-bold">{label}</label>
+
+      <select
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-emerald-700"
+      >
+        {options.map((item) => (
+          <option key={item}>{item}</option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
 function FileField({
   label,
   onChange,
@@ -599,7 +670,7 @@ function FileField({
 
       <input
         type="file"
-        accept="image/png,image/jpeg,image/webp"
+        accept="image/png,image/jpeg,image/webp,application/pdf"
         onChange={(event) => onChange(event.target.files?.[0] || null)}
         className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none focus:border-emerald-700"
       />
@@ -629,17 +700,17 @@ function MultipleFileField({
   );
 }
 
-function CheckField({
+function CheckboxField({
   checked,
   onChange,
-  text,
+  label,
 }: {
   checked: boolean;
   onChange: (value: boolean) => void;
-  text: string;
+  label: string;
 }) {
   return (
-    <label className="mt-4 flex gap-3 text-sm leading-6 text-slate-700">
+    <label className="flex gap-3 text-sm leading-6 text-slate-700">
       <input
         type="checkbox"
         checked={checked}
@@ -647,7 +718,7 @@ function CheckField({
         className="mt-1"
       />
 
-      <span>{text}</span>
+      <span>{label}</span>
     </label>
   );
 }

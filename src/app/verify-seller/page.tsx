@@ -5,12 +5,32 @@ import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
+const personalEmailDomains = [
+  "gmail.com",
+  "googlemail.com",
+  "yahoo.com",
+  "hotmail.com",
+  "outlook.com",
+  "live.com",
+  "icloud.com",
+  "aol.com",
+  "proton.me",
+  "protonmail.com",
+];
+
 export default function VerifySellerPage() {
   const [fullName, setFullName] = useState("");
   const [organization, setOrganization] = useState("");
   const [country, setCountry] = useState("");
+  const [officialEmail, setOfficialEmail] = useState("");
   const [note, setNote] = useState("");
   const [documentFile, setDocumentFile] = useState<File | null>(null);
+
+  const [consentAdminReview, setConsentAdminReview] = useState(false);
+  const [consentPrivate, setConsentPrivate] = useState(false);
+  const [consentRetention, setConsentRetention] = useState(false);
+  const [documentTruth, setDocumentTruth] = useState(false);
+
   const [currentStatus, setCurrentStatus] = useState<string | null>(null);
   const [adminFeedback, setAdminFeedback] = useState<string | null>(null);
   const [message, setMessage] = useState("Loading verification status...");
@@ -30,7 +50,7 @@ export default function VerifySellerPage() {
       const { data: profile, error } = await supabase
         .from("profiles")
         .select(
-          "full_name, organization, country, verification_status, verification_note, verification_admin_feedback"
+          "full_name, organization, country, verification_official_email, verification_status, verification_note, verification_admin_feedback, verification_consent_admin_review, verification_consent_private, verification_consent_retention, verification_document_truth_acknowledged"
         )
         .eq("id", user.id)
         .maybeSingle();
@@ -43,14 +63,44 @@ export default function VerifySellerPage() {
       setFullName(profile?.full_name || "");
       setOrganization(profile?.organization || "");
       setCountry(profile?.country || "");
+      setOfficialEmail(profile?.verification_official_email || "");
       setNote(profile?.verification_note || "");
       setCurrentStatus(profile?.verification_status || "not_requested");
       setAdminFeedback(profile?.verification_admin_feedback || null);
+
+      setConsentAdminReview(Boolean(profile?.verification_consent_admin_review));
+      setConsentPrivate(Boolean(profile?.verification_consent_private));
+      setConsentRetention(Boolean(profile?.verification_consent_retention));
+      setDocumentTruth(Boolean(profile?.verification_document_truth_acknowledged));
+
       setMessage("");
     }
 
     loadProfile();
   }, []);
+
+  function isValidEmail(email: string) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+  }
+
+  function isOfficialEmail(email: string) {
+    const cleanedEmail = email.trim().toLowerCase();
+    const domain = cleanedEmail.split("@")[1] || "";
+
+    if (!isValidEmail(cleanedEmail)) {
+      return false;
+    }
+
+    if (domain.endsWith(".edu.eg")) {
+      return true;
+    }
+
+    if (personalEmailDomains.includes(domain)) {
+      return false;
+    }
+
+    return true;
+  }
 
   async function uploadDocument(userId: string, file: File) {
     const extension = file.name.split(".").pop();
@@ -87,8 +137,32 @@ export default function VerifySellerPage() {
       return;
     }
 
+    if (!officialEmail.trim()) {
+      setMessage("Please write your official or institutional email.");
+      return;
+    }
+
+    if (!isOfficialEmail(officialEmail)) {
+      setMessage(
+        "Please use an official/institutional email, such as an email ending with .edu.eg or a company/lab domain. Personal Gmail, Yahoo, Hotmail, Outlook, iCloud, or similar emails are not accepted for verification."
+      );
+      return;
+    }
+
     if (!documentFile) {
-      setMessage("Please upload an ID, company document, lab card, or proof document.");
+      setMessage(
+        "Please upload a work ID, company registration, lab proof, or other business/lab verification document. Do not upload national ID or passport."
+      );
+      return;
+    }
+
+    if (
+      !consentAdminReview ||
+      !consentPrivate ||
+      !consentRetention ||
+      !documentTruth
+    ) {
+      setMessage("Please accept all verification consent checkboxes.");
       return;
     }
 
@@ -108,19 +182,24 @@ export default function VerifySellerPage() {
 
       const documentPath = await uploadDocument(user.id, documentFile);
 
-      const { error } = await supabase
-        .from("profiles")
-        .update({
-          full_name: fullName.trim(),
-          organization: organization.trim(),
-          country: country.trim(),
-          verification_document_path: documentPath,
-          verification_note: note.trim() || null,
-          verification_status: "pending",
-          verification_requested_at: new Date().toISOString(),
-          verification_admin_feedback: null,
-        })
-        .eq("id", user.id);
+      const { error } = await supabase.from("profiles").upsert({
+        id: user.id,
+        email: user.email || null,
+        full_name: fullName.trim(),
+        organization: organization.trim(),
+        country: country.trim(),
+        verification_official_email: officialEmail.trim().toLowerCase(),
+        verification_document_path: documentPath,
+        verification_note: note.trim() || null,
+        verification_status: "pending",
+        verification_requested_at: new Date().toISOString(),
+        verification_admin_feedback: null,
+        verification_consent_admin_review: consentAdminReview,
+        verification_consent_private: consentPrivate,
+        verification_consent_retention: consentRetention,
+        verification_document_truth_acknowledged: documentTruth,
+        verification_terms_accepted_at: new Date().toISOString(),
+      });
 
       if (error) {
         setMessage(error.message);
@@ -155,13 +234,35 @@ export default function VerifySellerPage() {
             Seller trust program
           </p>
 
-          <h1 className="text-4xl font-black">Seller ID Verification</h1>
+          <h1 className="text-4xl font-black">Seller Verification</h1>
 
           <p className="mt-4 max-w-2xl leading-7 text-slate-600">
             This step is optional, but it increases buyer trust. Your document is
-            private and will only be reviewed by the admin. It will not be shown
+            private and will only be reviewed by admin. It will not be shown
             publicly.
           </p>
+
+          <div className="mt-5 rounded-3xl border border-amber-200 bg-amber-50 p-5 text-amber-900">
+            <h2 className="font-black">Important document rule</h2>
+
+            <p className="mt-2 text-sm leading-6">
+              You can upload a work ID, company registration, lab proof, or any
+              document that helps admin verify your seller identity, not national
+              ID or passport.
+            </p>
+          </div>
+
+          <div className="mt-5 rounded-3xl border border-sky-200 bg-sky-50 p-5 text-sky-900">
+            <h2 className="font-black">Official email is required</h2>
+
+            <p className="mt-2 text-sm leading-6">
+              Please use an institutional or official email, such as an email
+              ending with <strong>.edu.eg</strong>, or an official company,
+              university, laboratory, hospital, or organization email. Personal
+              emails such as Gmail, Yahoo, Hotmail, Outlook, or iCloud are not
+              accepted for seller verification.
+            </p>
+          </div>
 
           {currentStatus && (
             <div className="mt-6 rounded-3xl bg-slate-50 p-5">
@@ -185,7 +286,7 @@ export default function VerifySellerPage() {
               label="Full Name *"
               value={fullName}
               onChange={setFullName}
-              placeholder="Your full legal name"
+              placeholder="Your full name or responsible person name"
             />
 
             <InputField
@@ -202,6 +303,14 @@ export default function VerifySellerPage() {
               placeholder="Example: Egypt"
             />
 
+            <InputField
+              label="Official / Institutional Email *"
+              value={officialEmail}
+              onChange={setOfficialEmail}
+              placeholder="Example: name@university.edu.eg or name@company.com"
+              type="email"
+            />
+
             <div>
               <label className="mb-2 block font-bold">
                 Verification Document *
@@ -215,8 +324,9 @@ export default function VerifySellerPage() {
               />
 
               <p className="mt-2 text-sm leading-6 text-slate-500">
-                You can upload an ID, work ID, company registration, lab proof,
-                or any document that helps admin verify your seller identity.
+                Upload work ID, company registration, lab proof, tax/commercial
+                registration, or business/lab proof document. Do not upload
+                national ID or passport.
               </p>
             </div>
 
@@ -230,6 +340,36 @@ export default function VerifySellerPage() {
                 placeholder="Write any additional details for admin review."
                 className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-emerald-700"
               />
+            </div>
+
+            <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
+              <h2 className="text-xl font-black">Verification consent</h2>
+
+              <div className="mt-4 grid gap-4">
+                <CheckboxField
+                  checked={consentAdminReview}
+                  onChange={setConsentAdminReview}
+                  label="I consent to LabFinds admin reviewing my verification document for verification only."
+                />
+
+                <CheckboxField
+                  checked={consentPrivate}
+                  onChange={setConsentPrivate}
+                  label="I understand my verification document will not be shown publicly."
+                />
+
+                <CheckboxField
+                  checked={consentRetention}
+                  onChange={setConsentRetention}
+                  label="I understand LabFinds may delete or retain verification evidence according to its privacy policy."
+                />
+
+                <CheckboxField
+                  checked={documentTruth}
+                  onChange={setDocumentTruth}
+                  label="I confirm the document is mine, accurate, and does not include a national ID or passport."
+                />
+              </div>
             </div>
 
             <button
@@ -257,23 +397,48 @@ function InputField({
   value,
   onChange,
   placeholder,
+  type = "text",
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
   placeholder: string;
+  type?: string;
 }) {
   return (
     <div>
       <label className="mb-2 block font-bold">{label}</label>
 
       <input
-        type="text"
+        type={type}
         placeholder={placeholder}
         value={value}
         onChange={(event) => onChange(event.target.value)}
         className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-emerald-700"
       />
     </div>
+  );
+}
+
+function CheckboxField({
+  checked,
+  onChange,
+  label,
+}: {
+  checked: boolean;
+  onChange: (value: boolean) => void;
+  label: string;
+}) {
+  return (
+    <label className="flex gap-3 text-sm leading-6 text-slate-700">
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={(event) => onChange(event.target.checked)}
+        className="mt-1"
+      />
+
+      <span>{label}</span>
+    </label>
   );
 }
