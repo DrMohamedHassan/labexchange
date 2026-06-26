@@ -1,188 +1,249 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
-type UserRole = "seller" | "admin" | null;
-
-type NotificationItem = {
-  id: number;
+type AdminNotification = {
+  key: string;
   title: string;
-  message: string;
-  link_url: string | null;
-  is_read: boolean | null;
-  created_at: string;
+  description: string;
+  count: number;
+  href: string;
+  badgeClassName: string;
 };
 
-export default function NotificationBell({ userRole }: { userRole: UserRole }) {
-  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+export default function NotificationBell() {
+  const [isAdmin, setIsAdmin] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
-  const [message, setMessage] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
 
-  const unreadCount = useMemo(() => {
-    return notifications.filter((item) => !item.is_read).length;
-  }, [notifications]);
+  const [verificationCount, setVerificationCount] = useState(0);
+  const [listingCount, setListingCount] = useState(0);
+  const [contactCount, setContactCount] = useState(0);
+  const [reportCount, setReportCount] = useState(0);
+  const [reviewCount, setReviewCount] = useState(0);
 
   useEffect(() => {
-    loadNotifications();
+    let mounted = true;
+
+    async function checkAdminAndLoad() {
+      try {
+        setIsLoading(true);
+
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+
+        if (!user) {
+          if (!mounted) return;
+          setIsAdmin(false);
+          setIsLoading(false);
+          return;
+        }
+
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", user.id)
+          .maybeSingle();
+
+        if (!mounted) return;
+
+        const admin = profile?.role === "admin";
+        setIsAdmin(admin);
+
+        if (admin) {
+          await loadCounts();
+        }
+
+        if (!mounted) return;
+        setIsLoading(false);
+      } catch (error) {
+        console.error("Notification loading failed:", error);
+
+        if (!mounted) return;
+
+        setIsAdmin(false);
+        setIsLoading(false);
+      }
+    }
+
+    checkAdminAndLoad();
 
     const interval = window.setInterval(() => {
-      loadNotifications();
+      if (isAdmin) {
+        loadCounts();
+      }
     }, 30000);
 
     return () => {
+      mounted = false;
       window.clearInterval(interval);
     };
-  }, [userRole]);
+  }, [isAdmin]);
 
-  async function loadNotifications() {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+  async function loadCounts() {
+    try {
+      const { count: pendingVerifications } = await supabase
+        .from("profiles")
+        .select("id", { count: "exact", head: true })
+        .eq("verification_status", "pending");
 
-    if (!user) {
-      setNotifications([]);
-      return;
-    }
+      const { count: pendingListings } = await supabase
+        .from("listings")
+        .select("id", { count: "exact", head: true })
+        .eq("status", "pending");
 
-    const filter =
-      userRole === "admin"
-        ? `recipient_id.eq.${user.id},recipient_role.eq.admin`
-        : `recipient_id.eq.${user.id}`;
+      const { count: pendingContacts } = await supabase
+        .from("contact_messages")
+        .select("id", { count: "exact", head: true })
+        .in("status", ["new", "open", "pending", "unread"]);
 
-    const { data, error } = await supabase
-      .from("notifications")
-      .select("id, title, message, link_url, is_read, created_at")
-      .or(filter)
-      .order("created_at", { ascending: false })
-      .limit(20);
+      const { count: pendingReports } = await supabase
+        .from("listing_reports")
+        .select("id", { count: "exact", head: true })
+        .in("status", ["new", "open", "pending", "unread"]);
 
-    if (error) {
-      setMessage(error.message);
-      return;
-    }
+      const { count: pendingReviews } = await supabase
+        .from("seller_reviews")
+        .select("id", { count: "exact", head: true })
+        .eq("status", "pending");
 
-    setNotifications((data || []) as NotificationItem[]);
-  }
-
-  async function markOneAsRead(notification: NotificationItem) {
-    await supabase
-      .from("notifications")
-      .update({ is_read: true })
-      .eq("id", notification.id);
-
-    setNotifications((current) =>
-      current.map((item) =>
-        item.id === notification.id ? { ...item, is_read: true } : item
-      )
-    );
-
-    if (notification.link_url) {
-      window.location.href = notification.link_url;
+      setVerificationCount(pendingVerifications || 0);
+      setListingCount(pendingListings || 0);
+      setContactCount(pendingContacts || 0);
+      setReportCount(pendingReports || 0);
+      setReviewCount(pendingReviews || 0);
+    } catch (error) {
+      console.error("Notification counts failed:", error);
     }
   }
 
-  async function markAllAsRead() {
-    const unreadIds = notifications
-      .filter((item) => !item.is_read)
-      .map((item) => item.id);
+  const notifications = useMemo<AdminNotification[]>(
+    () => [
+      {
+        key: "verifications",
+        title: "Seller verification requests",
+        description: "Users waiting for ID / seller verification approval.",
+        count: verificationCount,
+        href: "/admin/verifications",
+        badgeClassName: "bg-emerald-50 text-emerald-700 ring-emerald-200",
+      },
+      {
+        key: "listings",
+        title: "Product approvals",
+        description: "Listings waiting for admin acceptance or rejection.",
+        count: listingCount,
+        href: "/admin",
+        badgeClassName: "bg-blue-50 text-blue-700 ring-blue-200",
+      },
+      {
+        key: "contacts",
+        title: "Contact messages",
+        description: "Complaints, enquiries, misleading reports, or help requests.",
+        count: contactCount,
+        href: "/admin/contact-messages",
+        badgeClassName: "bg-indigo-50 text-indigo-700 ring-indigo-200",
+      },
+      {
+        key: "reports",
+        title: "Listing reports",
+        description: "Users reported misleading, unsafe, or suspicious listings.",
+        count: reportCount,
+        href: "/admin/reports",
+        badgeClassName: "bg-red-50 text-red-700 ring-red-200",
+      },
+      {
+        key: "reviews",
+        title: "Seller review approvals",
+        description: "Reviews waiting for admin approval before publishing.",
+        count: reviewCount,
+        href: "/admin/reviews",
+        badgeClassName: "bg-amber-50 text-amber-700 ring-amber-200",
+      },
+    ],
+    [verificationCount, listingCount, contactCount, reportCount, reviewCount]
+  );
 
-    if (unreadIds.length === 0) return;
+  const totalCount = notifications.reduce((sum, item) => sum + item.count, 0);
 
-    await supabase
-      .from("notifications")
-      .update({ is_read: true })
-      .in("id", unreadIds);
-
-    setNotifications((current) =>
-      current.map((item) => ({ ...item, is_read: true }))
-    );
+  if (isLoading || !isAdmin) {
+    return null;
   }
 
   return (
     <div className="relative">
       <button
         type="button"
-        onClick={() => {
-          setIsOpen((current) => !current);
-          loadNotifications();
-        }}
-        className="relative rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-black shadow-sm hover:border-emerald-600 md:px-5 md:py-3"
-        aria-label="Notifications"
+        onClick={() => setIsOpen((value) => !value)}
+        className="relative rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-black text-slate-800 shadow-sm hover:border-emerald-600"
+        aria-label="Admin notifications"
       >
         🔔
 
-        {unreadCount > 0 && (
-          <span className="absolute -right-2 -top-2 flex h-6 min-w-6 items-center justify-center rounded-full bg-red-600 px-2 text-xs font-black text-white ring-2 ring-white">
-            {unreadCount}
+        {totalCount > 0 && (
+          <span className="absolute -right-2 -top-2 flex h-6 min-w-6 items-center justify-center rounded-full bg-red-600 px-2 text-xs font-black text-white">
+            {totalCount > 99 ? "99+" : totalCount}
           </span>
         )}
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 z-[200] mt-3 w-[340px] overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl md:w-[420px]">
-          <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
-            <div>
-              <h2 className="font-black">Notifications</h2>
-              <p className="text-xs font-bold text-slate-500">
-                {unreadCount} unread
-              </p>
-            </div>
+        <div className="absolute right-0 z-50 mt-3 w-[340px] overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl">
+          <div className="border-b border-slate-100 p-5">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <h2 className="text-lg font-black text-slate-950">
+                  Admin Notifications
+                </h2>
 
-            <button
-              type="button"
-              onClick={markAllAsRead}
-              className="rounded-xl bg-slate-100 px-3 py-2 text-xs font-black text-slate-700 hover:bg-slate-200"
-            >
-              Mark all read
-            </button>
+                <p className="mt-1 text-xs font-bold text-slate-500">
+                  Pending actions requiring admin review.
+                </p>
+              </div>
+
+              <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-black text-slate-700">
+                {totalCount}
+              </span>
+            </div>
           </div>
 
-          {message && (
-            <p className="mx-4 mt-4 rounded-2xl bg-red-50 p-3 text-xs font-bold text-red-700">
-              {message}
-            </p>
-          )}
+          <div className="max-h-[420px] overflow-y-auto p-3">
+            {notifications.map((item) => (
+              <Link
+                key={item.key}
+                href={item.href}
+                onClick={() => setIsOpen(false)}
+                className="block rounded-2xl p-4 transition hover:bg-slate-50"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="font-black text-slate-950">{item.title}</p>
 
-          <div className="max-h-[420px] overflow-y-auto">
-            {notifications.length > 0 ? (
-              notifications.map((notification) => (
-                <button
-                  key={notification.id}
-                  type="button"
-                  onClick={() => markOneAsRead(notification)}
-                  className={
-                    notification.is_read
-                      ? "block w-full border-b border-slate-100 px-5 py-4 text-left hover:bg-slate-50"
-                      : "block w-full border-b border-red-100 bg-red-50 px-5 py-4 text-left hover:bg-red-100"
-                  }
-                >
-                  <div className="flex items-start gap-3">
-                    {!notification.is_read && (
-                      <span className="mt-1 h-3 w-3 rounded-full bg-red-600" />
-                    )}
-
-                    <div className="min-w-0 flex-1">
-                      <h3 className="font-black text-slate-950">
-                        {notification.title}
-                      </h3>
-
-                      <p className="mt-1 text-sm leading-6 text-slate-700">
-                        {notification.message}
-                      </p>
-
-                      <p className="mt-2 text-xs font-bold text-slate-400">
-                        {new Date(notification.created_at).toLocaleString()}
-                      </p>
-                    </div>
+                    <p className="mt-1 text-xs leading-5 text-slate-500">
+                      {item.description}
+                    </p>
                   </div>
-                </button>
-              ))
-            ) : (
-              <div className="px-5 py-8 text-center text-sm font-bold text-slate-500">
-                No notifications yet.
-              </div>
-            )}
+
+                  <span
+                    className={`rounded-full px-3 py-1 text-xs font-black ring-1 ${item.badgeClassName}`}
+                  >
+                    {item.count}
+                  </span>
+                </div>
+              </Link>
+            ))}
+          </div>
+
+          <div className="border-t border-slate-100 p-3">
+            <Link
+              href="/admin/notifications"
+              onClick={() => setIsOpen(false)}
+              className="block rounded-2xl bg-slate-950 px-4 py-3 text-center text-sm font-black text-white hover:bg-slate-800"
+            >
+              Open Notification Center
+            </Link>
           </div>
         </div>
       )}
