@@ -6,6 +6,13 @@ import { useRouter } from "next/navigation";
 import { formatPriceWithCurrency } from "@/lib/currencies";
 import { supabase } from "@/lib/supabase";
 
+type SellerPublicProfile = {
+  full_name: string | null;
+  organization: string | null;
+  avatar_url: string | null;
+  is_verified_seller: boolean | null;
+};
+
 export default function ListingCard({
   id,
   title,
@@ -35,6 +42,8 @@ export default function ListingCard({
 
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [currentRole, setCurrentRole] = useState<string | null>(null);
+  const [sellerProfile, setSellerProfile] =
+    useState<SellerPublicProfile | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [message, setMessage] = useState("");
@@ -53,36 +62,48 @@ export default function ListingCard({
   useEffect(() => {
     let mounted = true;
 
-    async function loadUser() {
+    async function loadUserAndSeller() {
       try {
         const {
           data: { user },
         } = await supabase.auth.getUser();
 
-        if (!mounted || !user) return;
+        if (mounted && user) {
+          setCurrentUserId(user.id);
 
-        setCurrentUserId(user.id);
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("role")
+            .eq("id", user.id)
+            .maybeSingle();
 
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("role")
-          .eq("id", user.id)
-          .maybeSingle();
+          if (mounted) {
+            setCurrentRole(profile?.role || "seller");
+          }
+        }
 
-        if (!mounted) return;
+        if (sellerId) {
+          const { data: publicProfile } = await supabase
+            .from("public_profiles")
+            .select("full_name, organization, avatar_url, is_verified_seller")
+            .eq("id", sellerId)
+            .maybeSingle();
 
-        setCurrentRole(profile?.role || "seller");
+          if (mounted) {
+            setSellerProfile(publicProfile as SellerPublicProfile | null);
+          }
+        }
       } catch (error) {
-        console.error("ListingCard user loading failed:", error);
+        console.error("ListingCard loading failed:", error);
       }
     }
 
-    loadUser();
+    loadUserAndSeller();
 
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [sellerId]);
 
   async function deleteListing() {
     const confirmed = window.confirm(
@@ -167,6 +188,37 @@ export default function ListingCard({
       </Link>
 
       <div className="p-5">
+        {sellerId && (
+          <Link
+            href={`/users/${sellerId}`}
+            className="mb-4 flex items-center gap-3 rounded-2xl bg-slate-50 p-3 hover:bg-emerald-50"
+          >
+            {sellerProfile?.avatar_url ? (
+              <img
+                src={sellerProfile.avatar_url}
+                alt={sellerProfile.full_name || "Seller"}
+                className="h-11 w-11 rounded-full object-cover"
+              />
+            ) : (
+              <span className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-xl ring-1 ring-slate-200">
+                👤
+              </span>
+            )}
+
+            <div className="min-w-0">
+              <p className="truncate text-sm font-black text-slate-900">
+                {sellerProfile?.full_name || "View seller profile"}
+              </p>
+
+              <p className="text-xs font-bold text-slate-500">
+                {sellerProfile?.is_verified_seller
+                  ? "✅ Verified User"
+                  : "Seller profile"}
+              </p>
+            </div>
+          </Link>
+        )}
+
         <Link href={`/listings/${id}`} className="block">
           <p className="text-xs font-black uppercase tracking-wide text-emerald-700">
             {category}

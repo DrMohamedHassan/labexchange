@@ -10,6 +10,8 @@ export default function Header() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [role, setRole] = useState<UserRole>(null);
   const [isVerifiedSeller, setIsVerifiedSeller] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [fullName, setFullName] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -30,13 +32,15 @@ export default function Header() {
           setIsLoggedIn(false);
           setRole(null);
           setIsVerifiedSeller(false);
+          setAvatarUrl(null);
+          setFullName(null);
           setLoading(false);
           return;
         }
 
         const { data: profile } = await supabase
           .from("profiles")
-          .select("role, is_verified_seller")
+          .select("role, is_verified_seller, avatar_url, full_name")
           .eq("id", user.id)
           .maybeSingle();
 
@@ -45,6 +49,8 @@ export default function Header() {
         setIsLoggedIn(true);
         setRole(profile?.role === "admin" ? "admin" : "seller");
         setIsVerifiedSeller(Boolean(profile?.is_verified_seller));
+        setAvatarUrl(profile?.avatar_url || null);
+        setFullName(profile?.full_name || user.email || "User");
         setLoading(false);
       } catch (error) {
         console.error("Header session loading failed:", error);
@@ -54,6 +60,8 @@ export default function Header() {
         setIsLoggedIn(false);
         setRole(null);
         setIsVerifiedSeller(false);
+        setAvatarUrl(null);
+        setFullName(null);
         setLoading(false);
       }
     }
@@ -82,6 +90,8 @@ export default function Header() {
     setIsLoggedIn(false);
     setRole(null);
     setIsVerifiedSeller(false);
+    setAvatarUrl(null);
+    setFullName(null);
 
     window.location.href = "/";
   }
@@ -124,6 +134,28 @@ export default function Header() {
             </span>
           ) : isLoggedIn ? (
             <>
+              <Link
+                href="/profile"
+                className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-black text-slate-800 shadow-sm hover:border-emerald-600"
+                title={fullName || "Profile"}
+              >
+                {avatarUrl ? (
+                  <img
+                    src={avatarUrl}
+                    alt="Profile"
+                    className="h-9 w-9 rounded-full object-cover"
+                  />
+                ) : (
+                  <span className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-50 text-emerald-800 ring-1 ring-emerald-200">
+                    👤
+                  </span>
+                )}
+
+                <span className="hidden max-w-[120px] truncate md:inline">
+                  Profile
+                </span>
+              </Link>
+
               {role === "admin" && (
                 <>
                   <Link
@@ -179,7 +211,7 @@ export default function Header() {
                       : "rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-black text-amber-700 hover:border-amber-500"
                   }
                 >
-                  {isVerifiedSeller ? "✅ Verified" : "🛡️ Verify Seller"}
+                  {isVerifiedSeller ? "✅ Verified" : "🛡️ Verify"}
                 </Link>
               )}
 
