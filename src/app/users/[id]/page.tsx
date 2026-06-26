@@ -1,6 +1,7 @@
 import AdminSellerVerificationButton from "@/components/AdminSellerVerificationButton";
 import Header from "@/components/Header";
 import ListingCard from "@/components/ListingCard";
+import PublicSellerReviewBox from "@/components/PublicSellerReviewBox";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 
@@ -96,7 +97,10 @@ export default async function PublicSellerPage({ params }: SellerPageProps) {
 
       <section className="border-b border-slate-200 bg-white">
         <div className="mx-auto max-w-7xl px-6 py-10">
-          <Link href="/listings" className="mb-6 inline-block font-bold text-emerald-700">
+          <Link
+            href="/listings"
+            className="mb-6 inline-block font-bold text-emerald-700"
+          >
             ← Back to items
           </Link>
 
@@ -151,7 +155,9 @@ export default async function PublicSellerPage({ params }: SellerPageProps) {
 
                 <span className="rounded-2xl bg-white px-5 py-3 font-black shadow-sm">
                   Rating:{" "}
-                  {averageRating ? `${averageRating.toFixed(1)} ★` : "No rating yet"}
+                  {averageRating
+                    ? `${averageRating.toFixed(1)} ★`
+                    : "No rating yet"}
                 </span>
               </div>
             </div>
@@ -195,45 +201,49 @@ export default async function PublicSellerPage({ params }: SellerPageProps) {
           )}
         </div>
 
-        <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-100">
-          <div className="flex items-center justify-between gap-4">
-            <h2 className="text-2xl font-black">Seller Reviews</h2>
+        <div className="grid gap-8">
+          <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-100">
+            <div className="flex items-center justify-between gap-4">
+              <h2 className="text-2xl font-black">Seller Reviews</h2>
 
-            {(reviewsCount || 0) > 3 && (
-              <Link
-                href={`/users/${id}/reviews`}
-                className="font-black text-emerald-700"
-              >
-                See more →
-              </Link>
-            )}
+              {(reviewsCount || 0) > 3 && (
+                <Link
+                  href={`/users/${id}/reviews`}
+                  className="font-black text-emerald-700"
+                >
+                  See more →
+                </Link>
+              )}
+            </div>
+
+            <div className="mt-5 grid gap-4">
+              {reviews.length > 0 ? (
+                reviews.map((review) => (
+                  <div key={review.id} className="rounded-2xl bg-slate-50 p-4">
+                    <p className="text-lg font-black text-amber-500">
+                      {"★".repeat(review.rating)}
+                      <span className="text-slate-300">
+                        {"★".repeat(5 - review.rating)}
+                      </span>
+                    </p>
+
+                    <p className="mt-2 leading-7 text-slate-700">
+                      {review.comment}
+                    </p>
+
+                    <p className="mt-3 text-xs font-bold text-slate-500">
+                      Verified reviewer ·{" "}
+                      {new Date(review.created_at).toLocaleDateString()}
+                    </p>
+                  </div>
+                ))
+              ) : (
+                <p className="text-slate-500">No approved reviews yet.</p>
+              )}
+            </div>
           </div>
 
-          <div className="mt-5 grid gap-4">
-            {reviews.length > 0 ? (
-              reviews.map((review) => (
-                <div key={review.id} className="rounded-2xl bg-slate-50 p-4">
-                  <p className="text-lg font-black text-amber-500">
-                    {"★".repeat(review.rating)}
-                    <span className="text-slate-300">
-                      {"★".repeat(5 - review.rating)}
-                    </span>
-                  </p>
-
-                  <p className="mt-2 leading-7 text-slate-700">
-                    {review.comment}
-                  </p>
-
-                  <p className="mt-3 text-xs font-bold text-slate-500">
-                    Verified reviewer ·{" "}
-                    {new Date(review.created_at).toLocaleDateString()}
-                  </p>
-                </div>
-              ))
-            ) : (
-              <p className="text-slate-500">No approved reviews yet.</p>
-            )}
-          </div>
+          <PublicSellerReviewBox sellerId={id} />
         </div>
       </section>
     </main>

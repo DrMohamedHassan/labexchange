@@ -17,32 +17,52 @@ export default function PublicSellerReviewBox({
   const [comment, setComment] = useState("");
   const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     loadUser();
   }, []);
 
   async function loadUser() {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    try {
+      setIsLoading(true);
 
-    if (!user) {
-      setIsLoggedIn(false);
-      return;
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        setIsLoggedIn(false);
+        setIsVerifiedUser(false);
+        setCurrentUserId("");
+        setBuyerEmail("");
+        setIsLoading(false);
+        return;
+      }
+
+      setIsLoggedIn(true);
+      setCurrentUserId(user.id);
+      setBuyerEmail(user.email || "");
+
+      const { data: profile, error } = await supabase
+        .from("profiles")
+        .select("is_verified_seller")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      if (error) {
+        setMessage(error.message);
+        setIsVerifiedUser(false);
+        setIsLoading(false);
+        return;
+      }
+
+      setIsVerifiedUser(Boolean(profile?.is_verified_seller));
+      setIsLoading(false);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Something went wrong.");
+      setIsLoading(false);
     }
-
-    setIsLoggedIn(true);
-    setCurrentUserId(user.id);
-    setBuyerEmail(user.email || "");
-
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("is_verified_seller")
-      .eq("id", user.id)
-      .maybeSingle();
-
-    setIsVerifiedUser(Boolean(profile?.is_verified_seller));
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -54,7 +74,7 @@ export default function PublicSellerReviewBox({
     }
 
     if (!isVerifiedUser) {
-      setMessage("Only verified users can submit seller reviews.");
+      setMessage("Only verified LabFinds users can submit seller reviews.");
       return;
     }
 
@@ -64,7 +84,12 @@ export default function PublicSellerReviewBox({
     }
 
     if (!comment.trim()) {
-      setMessage("Please write a comment.");
+      setMessage("Please write your review comment.");
+      return;
+    }
+
+    if (comment.trim().length < 10) {
+      setMessage("Please write a more useful review comment.");
       return;
     }
 
@@ -88,7 +113,9 @@ export default function PublicSellerReviewBox({
 
     setRating("5");
     setComment("");
-    setMessage("Review submitted successfully. It will appear after admin approval.");
+    setMessage(
+      "Review submitted successfully. It will appear on this seller profile after admin approval."
+    );
     setIsSubmitting(false);
   }
 
@@ -97,14 +124,18 @@ export default function PublicSellerReviewBox({
       <h2 className="text-2xl font-black">Write a Seller Review</h2>
 
       <p className="mt-3 text-sm leading-6 text-slate-600">
-        Reviews are accepted only from verified users and must be approved by
-        admin before appearing publicly.
+        Verified LabFinds users can rate sellers with stars and write a comment.
+        Reviews are not published immediately; admin must approve them first.
       </p>
 
-      {!isLoggedIn ? (
+      {isLoading ? (
+        <div className="mt-5 rounded-2xl bg-slate-50 p-5 font-bold text-slate-600">
+          Checking your account...
+        </div>
+      ) : !isLoggedIn ? (
         <div className="mt-5 rounded-2xl bg-slate-50 p-5">
           <p className="font-bold text-slate-700">
-            Please login to submit a review.
+            Please login to submit a seller review.
           </p>
 
           <Link
@@ -119,7 +150,8 @@ export default function PublicSellerReviewBox({
           <p className="font-black">Verification required</p>
 
           <p className="mt-2 text-sm leading-6">
-            You must verify your account before writing seller reviews.
+            You must verify your account before writing seller reviews. This
+            helps reduce fake reviews and fraud.
           </p>
 
           <Link
@@ -143,11 +175,11 @@ export default function PublicSellerReviewBox({
               onChange={(event) => setRating(event.target.value)}
               className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-emerald-700"
             >
-              <option value="5">5 Stars — Excellent</option>
-              <option value="4">4 Stars — Very Good</option>
-              <option value="3">3 Stars — Good</option>
-              <option value="2">2 Stars — Fair</option>
-              <option value="1">1 Star — Poor</option>
+              <option value="5">★★★★★ — Excellent</option>
+              <option value="4">★★★★☆ — Very Good</option>
+              <option value="3">★★★☆☆ — Good</option>
+              <option value="2">★★☆☆☆ — Fair</option>
+              <option value="1">★☆☆☆☆ — Poor</option>
             </select>
           </div>
 
@@ -158,7 +190,7 @@ export default function PublicSellerReviewBox({
               rows={5}
               value={comment}
               onChange={(event) => setComment(event.target.value)}
-              placeholder="Write your experience with this seller."
+              placeholder="Write your experience with this seller. Example: communication, product accuracy, documents, storage, delivery, and overall trust."
               className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-emerald-700"
             />
           </div>
@@ -168,7 +200,7 @@ export default function PublicSellerReviewBox({
             disabled={isSubmitting}
             className="rounded-2xl bg-emerald-700 px-6 py-4 font-black text-white hover:bg-emerald-800 disabled:cursor-not-allowed disabled:bg-slate-400"
           >
-            {isSubmitting ? "Submitting..." : "Submit Review for Approval"}
+            {isSubmitting ? "Submitting..." : "Submit Review for Admin Approval"}
           </button>
         </form>
       )}
