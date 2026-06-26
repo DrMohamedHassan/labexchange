@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import NotificationBell from "@/components/NotificationBell";
+import UserNotificationBell from "@/components/UserNotificationBell";
 import { supabase } from "@/lib/supabase";
 
 type UserRole = "seller" | "admin" | null;
@@ -135,6 +136,8 @@ export default function Header() {
             </span>
           ) : isLoggedIn ? (
             <>
+              <UserNotificationBell />
+
               {role === "admin" && <NotificationBell />}
 
               <Link
