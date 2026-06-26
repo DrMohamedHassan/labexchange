@@ -61,12 +61,12 @@ export default function AdminNotificationsPage() {
       const { count: contactCount } = await supabase
         .from("contact_messages")
         .select("id", { count: "exact", head: true })
-        .in("status", ["new", "open", "pending", "unread"]);
+        .in("status", ["new", "open", "pending", "unread", "under_review"]);
 
       const { count: reportCount } = await supabase
         .from("listing_reports")
         .select("id", { count: "exact", head: true })
-        .in("status", ["new", "open", "pending", "unread"]);
+        .in("status", ["new", "open", "pending", "unread", "under_review"]);
 
       const { count: reviewCount } = await supabase
         .from("seller_reviews")
@@ -77,7 +77,7 @@ export default function AdminNotificationsPage() {
         {
           title: "Seller Verification Requests",
           description:
-            "Users submitted ID or seller verification documents and need approval or rejection.",
+            "Users submitted seller verification documents and need approval or rejection.",
           count: verificationCount || 0,
           href: "/admin/verifications",
           buttonText: "Review Verifications",
@@ -98,7 +98,7 @@ export default function AdminNotificationsPage() {
             "Users submitted enquiries, complaints, misleading information alerts, or help requests.",
           count: contactCount || 0,
           href: "/admin/contact-messages",
-          buttonText: "Open Messages",
+          buttonText: "Open Admin Messages",
           className: "border-indigo-200 bg-indigo-50 text-indigo-800",
         },
         {
@@ -149,7 +149,7 @@ export default function AdminNotificationsPage() {
 
               <p className="mt-3 max-w-2xl leading-7 text-slate-600">
                 All pending admin actions in one place. Each card opens the
-                correct review page directly.
+                correct admin review page directly.
               </p>
             </div>
 

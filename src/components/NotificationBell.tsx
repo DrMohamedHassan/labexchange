@@ -26,6 +26,7 @@ export default function NotificationBell() {
 
   useEffect(() => {
     let mounted = true;
+    let adminValue = false;
 
     async function checkAdminAndLoad() {
       try {
@@ -37,6 +38,7 @@ export default function NotificationBell() {
 
         if (!user) {
           if (!mounted) return;
+
           setIsAdmin(false);
           setIsLoading(false);
           return;
@@ -50,10 +52,10 @@ export default function NotificationBell() {
 
         if (!mounted) return;
 
-        const admin = profile?.role === "admin";
-        setIsAdmin(admin);
+        adminValue = profile?.role === "admin";
+        setIsAdmin(adminValue);
 
-        if (admin) {
+        if (adminValue) {
           await loadCounts();
         }
 
@@ -72,7 +74,7 @@ export default function NotificationBell() {
     checkAdminAndLoad();
 
     const interval = window.setInterval(() => {
-      if (isAdmin) {
+      if (adminValue) {
         loadCounts();
       }
     }, 30000);
@@ -81,7 +83,7 @@ export default function NotificationBell() {
       mounted = false;
       window.clearInterval(interval);
     };
-  }, [isAdmin]);
+  }, []);
 
   async function loadCounts() {
     try {
@@ -98,12 +100,12 @@ export default function NotificationBell() {
       const { count: pendingContacts } = await supabase
         .from("contact_messages")
         .select("id", { count: "exact", head: true })
-        .in("status", ["new", "open", "pending", "unread"]);
+        .in("status", ["new", "open", "pending", "unread", "under_review"]);
 
       const { count: pendingReports } = await supabase
         .from("listing_reports")
         .select("id", { count: "exact", head: true })
-        .in("status", ["new", "open", "pending", "unread"]);
+        .in("status", ["new", "open", "pending", "unread", "under_review"]);
 
       const { count: pendingReviews } = await supabase
         .from("seller_reviews")
@@ -125,7 +127,7 @@ export default function NotificationBell() {
       {
         key: "verifications",
         title: "Seller verification requests",
-        description: "Users waiting for ID / seller verification approval.",
+        description: "Users waiting for seller verification approval.",
         count: verificationCount,
         href: "/admin/verifications",
         badgeClassName: "bg-emerald-50 text-emerald-700 ring-emerald-200",
