@@ -6,9 +6,11 @@ import { FormEvent, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
 export default function ContactPage() {
+  const [isLoadingUser, setIsLoadingUser] = useState(true);
   const [userId, setUserId] = useState("");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+
   const [messageType, setMessageType] = useState("Complaint");
   const [subject, setSubject] = useState("");
   const [messageBody, setMessageBody] = useState("");
@@ -20,11 +22,19 @@ export default function ContactPage() {
   }, []);
 
   async function loadUser() {
+    setIsLoadingUser(true);
+
     const {
       data: { user },
     } = await supabase.auth.getUser();
 
-    if (!user) return;
+    if (!user) {
+      setUserId("");
+      setName("");
+      setEmail("");
+      setIsLoadingUser(false);
+      return;
+    }
 
     setUserId(user.id);
     setEmail(user.email || "");
@@ -36,10 +46,16 @@ export default function ContactPage() {
       .maybeSingle();
 
     setName(profile?.full_name || "");
+    setIsLoadingUser(false);
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
+    if (!userId) {
+      setPageMessage("You must login before sending a request.");
+      return;
+    }
 
     if (!name.trim()) {
       setPageMessage("Please write your name.");
@@ -65,7 +81,7 @@ export default function ContactPage() {
     setPageMessage("Sending your message...");
 
     const { error } = await supabase.from("contact_messages").insert({
-      user_id: userId || null,
+      user_id: userId,
       name: name.trim(),
       email: email.trim(),
       subject: subject.trim(),
@@ -85,9 +101,7 @@ export default function ContactPage() {
     setMessageType("Complaint");
 
     setPageMessage(
-      userId
-        ? "Your message was sent successfully. You will receive a notification when admin replies."
-        : "Your message was sent successfully. Login before sending next time if you want to receive in-app notifications."
+      "Your message was sent successfully. You will receive a notification when admin replies."
     );
 
     setIsSubmitting(false);
@@ -114,102 +128,121 @@ export default function ContactPage() {
             requests, seller issues, buyer issues, or general enquiries.
           </p>
 
-          {userId ? (
-            <div className="mt-6 rounded-3xl border border-emerald-200 bg-emerald-50 p-5 text-emerald-900">
-              <h2 className="font-black">You are logged in</h2>
+          {isLoadingUser ? (
+            <div className="mt-8 rounded-3xl bg-slate-50 p-8">
+              <p className="font-bold text-slate-600">Checking login...</p>
+            </div>
+          ) : !userId ? (
+            <div className="mt-8 rounded-3xl border border-amber-200 bg-amber-50 p-8 text-amber-900">
+              <h2 className="text-2xl font-black">Login required</h2>
 
-              <p className="mt-2 text-sm leading-6">
-                Admin replies will appear in your notifications and in My
-                Requests.
+              <p className="mt-3 leading-7">
+                You must create an account and login before sending a request,
+                complaint, misleading product report, or support message. This
+                helps LabFinds prevent anonymous abuse and allows admin to reply
+                to you inside your notification center.
               </p>
 
-              <Link
-                href="/my-requests"
-                className="mt-4 inline-block font-black text-emerald-700 underline"
-              >
-                Open My Requests
-              </Link>
+              <div className="mt-6 flex flex-wrap gap-3">
+                <Link
+                  href="/login"
+                  className="rounded-2xl bg-emerald-700 px-6 py-3 font-black text-white hover:bg-emerald-800"
+                >
+                  Login
+                </Link>
+
+                <Link
+                  href="/register"
+                  className="rounded-2xl border border-slate-300 bg-white px-6 py-3 font-black text-slate-800 hover:border-emerald-600"
+                >
+                  Create Account
+                </Link>
+              </div>
             </div>
           ) : (
-            <div className="mt-6 rounded-3xl border border-amber-200 bg-amber-50 p-5 text-amber-900">
-              <h2 className="font-black">Login recommended</h2>
+            <>
+              <div className="mt-6 rounded-3xl border border-emerald-200 bg-emerald-50 p-5 text-emerald-900">
+                <h2 className="font-black">You are logged in</h2>
 
-              <p className="mt-2 text-sm leading-6">
-                You can send anonymously, but you will not receive in-app
-                notifications unless you login first.
-              </p>
+                <p className="mt-2 text-sm leading-6">
+                  Admin replies will appear in your notifications and in My
+                  Requests.
+                </p>
 
-              <Link
-                href="/login"
-                className="mt-4 inline-block font-black text-amber-700 underline"
-              >
-                Login first
-              </Link>
-            </div>
+                <Link
+                  href="/my-requests"
+                  className="mt-4 inline-block font-black text-emerald-700 underline"
+                >
+                  Open My Requests
+                </Link>
+              </div>
+
+              <form onSubmit={handleSubmit} className="mt-8 grid gap-6">
+                <div className="grid gap-5 md:grid-cols-2">
+                  <InputField
+                    label="Name *"
+                    value={name}
+                    onChange={setName}
+                    placeholder="Your name"
+                  />
+
+                  <InputField
+                    label="Email *"
+                    value={email}
+                    onChange={setEmail}
+                    placeholder="your@email.com"
+                    type="email"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-2 block font-bold">
+                    Request Type *
+                  </label>
+
+                  <select
+                    value={messageType}
+                    onChange={(event) => setMessageType(event.target.value)}
+                    className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-emerald-700"
+                  >
+                    <option>Complaint</option>
+                    <option>Misleading product report</option>
+                    <option>Help request</option>
+                    <option>Buyer issue</option>
+                    <option>Seller issue</option>
+                    <option>General enquiry</option>
+                  </select>
+                </div>
+
+                <InputField
+                  label="Subject *"
+                  value={subject}
+                  onChange={setSubject}
+                  placeholder="Example: Misleading product information"
+                />
+
+                <div>
+                  <label className="mb-2 block font-bold">Message *</label>
+
+                  <textarea
+                    rows={7}
+                    value={messageBody}
+                    onChange={(event) => setMessageBody(event.target.value)}
+                    placeholder="Write your complaint, request, or report clearly."
+                    className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-emerald-700"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="rounded-2xl bg-emerald-700 px-6 py-4 font-black text-white hover:bg-emerald-800 disabled:cursor-not-allowed disabled:bg-slate-400"
+                >
+                  {isSubmitting ? "Sending..." : "Send Message"}
+                </button>
+              </form>
+            </>
           )}
-
-          <form onSubmit={handleSubmit} className="mt-8 grid gap-6">
-            <div className="grid gap-5 md:grid-cols-2">
-              <InputField
-                label="Name *"
-                value={name}
-                onChange={setName}
-                placeholder="Your name"
-              />
-
-              <InputField
-                label="Email *"
-                value={email}
-                onChange={setEmail}
-                placeholder="your@email.com"
-                type="email"
-              />
-            </div>
-
-            <div>
-              <label className="mb-2 block font-bold">Request Type *</label>
-
-              <select
-                value={messageType}
-                onChange={(event) => setMessageType(event.target.value)}
-                className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-emerald-700"
-              >
-                <option>Complaint</option>
-                <option>Misleading product report</option>
-                <option>Help request</option>
-                <option>Buyer issue</option>
-                <option>Seller issue</option>
-                <option>General enquiry</option>
-              </select>
-            </div>
-
-            <InputField
-              label="Subject *"
-              value={subject}
-              onChange={setSubject}
-              placeholder="Example: Misleading product information"
-            />
-
-            <div>
-              <label className="mb-2 block font-bold">Message *</label>
-
-              <textarea
-                rows={7}
-                value={messageBody}
-                onChange={(event) => setMessageBody(event.target.value)}
-                placeholder="Write your complaint, request, or report clearly."
-                className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-emerald-700"
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="rounded-2xl bg-emerald-700 px-6 py-4 font-black text-white hover:bg-emerald-800 disabled:cursor-not-allowed disabled:bg-slate-400"
-            >
-              {isSubmitting ? "Sending..." : "Send Message"}
-            </button>
-          </form>
 
           {pageMessage && (
             <p className="mt-6 rounded-2xl bg-slate-100 p-4 font-bold text-slate-700">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 
@@ -15,6 +15,9 @@ export default function BuyerContactBox({
   listingId: number;
   country?: string | null;
 }) {
+  const [isLoadingUser, setIsLoadingUser] = useState(true);
+  const [userId, setUserId] = useState("");
+
   const [inspectBeforePayment, setInspectBeforePayment] = useState(false);
   const [checkDocuments, setCheckDocuments] = useState(false);
   const [marketplaceOnly, setMarketplaceOnly] = useState(false);
@@ -23,17 +26,28 @@ export default function BuyerContactBox({
   const allAccepted =
     inspectBeforePayment && checkDocuments && marketplaceOnly && noProhibitedItems;
 
+  useEffect(() => {
+    loadUser();
+  }, []);
+
+  async function loadUser() {
+    setIsLoadingUser(true);
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    setUserId(user?.id || "");
+    setIsLoadingUser(false);
+  }
+
   async function trackWhatsAppClick() {
     try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
       await supabase.from("analytics_events").insert({
         event_type: "whatsapp_click",
         page_path: window.location.pathname,
         listing_id: listingId,
-        user_id: user?.id || null,
+        user_id: userId,
         metadata: {
           source: "listing_details_contact_button",
           country: country || null,
@@ -57,6 +71,50 @@ export default function BuyerContactBox({
           This advertisement is kept temporarily for transparency and buyer
           review.
         </p>
+      </div>
+    );
+  }
+
+  if (isLoadingUser) {
+    return (
+      <div
+        id="buyer-contact"
+        className="mt-8 rounded-3xl border border-slate-200 bg-slate-50 p-5"
+      >
+        <p className="font-bold text-slate-600">Checking login...</p>
+      </div>
+    );
+  }
+
+  if (!userId) {
+    return (
+      <div
+        id="buyer-contact"
+        className="mt-8 rounded-3xl border border-amber-200 bg-amber-50 p-6 text-amber-900"
+      >
+        <h2 className="text-xl font-black">Login required before buying</h2>
+
+        <p className="mt-3 text-sm leading-6">
+          You must create an account and login before contacting a seller or
+          opening WhatsApp. This helps protect buyers, sellers, and the
+          marketplace from anonymous unsafe deals.
+        </p>
+
+        <div className="mt-5 flex flex-wrap gap-3">
+          <Link
+            href="/login"
+            className="rounded-2xl bg-emerald-700 px-5 py-3 font-black text-white hover:bg-emerald-800"
+          >
+            Login
+          </Link>
+
+          <Link
+            href="/register"
+            className="rounded-2xl border border-slate-300 bg-white px-5 py-3 font-black text-slate-800 hover:border-emerald-600"
+          >
+            Create Account
+          </Link>
+        </div>
       </div>
     );
   }

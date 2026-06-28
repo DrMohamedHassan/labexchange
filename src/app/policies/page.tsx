@@ -1,122 +1,204 @@
 import Header from "@/components/Header";
 import Link from "next/link";
 
+export const dynamic = "force-dynamic";
+
 export default function PoliciesPage() {
   return (
     <main className="min-h-screen bg-slate-50 text-slate-950">
       <Header />
 
-      <div className="mx-auto max-w-4xl px-6 py-10">
+      <div className="mx-auto max-w-5xl px-6 py-10">
         <Link href="/" className="mb-6 inline-block font-bold text-emerald-700">
-          â† Back to homepage
+          ← Back to homepage
         </Link>
 
-        <div className="rounded-3xl bg-white p-8 shadow-sm">
-          <h1 className="text-4xl font-black">Website Policies</h1>
-
-          <p className="mt-4 text-slate-600">
-            These policies explain how InterLab Hub works as an online listing
-            platform between buyers and sellers.
+        <section className="rounded-[2rem] bg-white p-8 shadow-sm">
+          <p className="mb-4 inline-block rounded-full bg-emerald-50 px-4 py-2 text-sm font-black text-emerald-700">
+            LabFinds Policies
           </p>
 
-          <PolicySection title="1. Terms of Service">
-            <p>
-              The website is only a platform for listing and displaying
-              advertisements.
-            </p>
-            <p>
-              The website acts solely as an intermediary between buyers and
-              sellers.
-            </p>
-            <p>
-              Buyers and sellers are fully responsible for their transactions.
-            </p>
-            <p>
-              The website does not guarantee the quality, safety, legality, or
-              authenticity of any listed products.
-            </p>
-            <p>
-              The website is not responsible for any disputes, losses, fraud, or
-              damages arising from transactions between users.
-            </p>
-          </PolicySection>
+          <h1 className="text-4xl font-black">Platform Policies</h1>
 
-          <PolicySection title="2. Privacy Policy">
-            <p>
-              The website may collect personal information such as name, email,
-              phone number, city, account details, listing information, product
-              images, and seller contact details.
-            </p>
-            <p>
-              This information is used to create accounts, display listings,
-              allow buyers and sellers to communicate, review listings, and
-              improve platform safety.
-            </p>
-            <p>
-              User information is not sold to third parties. Some information,
-              such as seller name and phone number, may be displayed publicly on
-              approved listings.
-            </p>
-            <p>
-              Users can request account deletion and personal data deletion by
-              contacting the website administrator.
-            </p>
-          </PolicySection>
+          <p className="mt-4 max-w-3xl leading-7 text-slate-600">
+            These policies explain how LabFinds works as a marketplace for lab
+            supplies and equipment. All users must read and follow these rules
+            before listing, buying, reporting, or contacting sellers.
+          </p>
 
-          <PolicySection title="3. Prohibited Items Policy">
-            <p>The website prohibits listing or selling:</p>
-            <ul className="ml-6 list-disc space-y-2">
-              <li>Restricted or illegal medicines.</li>
-              <li>Hazardous or dangerous materials.</li>
-              <li>Harmful chemical products.</li>
-              <li>Counterfeit products.</li>
-              <li>Illegal goods or substances.</li>
-              <li>
-                Any products that require special governmental licenses,
-                approvals, or restricted handling.
-              </li>
-            </ul>
-          </PolicySection>
+          <div className="mt-8 grid gap-8">
+            <PolicySection title="1. Platform Role">
+              <p>
+                LabFinds is an online marketplace that connects buyers and
+                sellers. LabFinds does not own the listed products, does not
+                inspect every product physically, does not process payments
+                between users, and is not a party to buyer-seller transactions.
+              </p>
 
-          <PolicySection title="4. Reporting and Content Removal">
-            <p>Users can report:</p>
-            <ul className="ml-6 list-disc space-y-2">
-              <li>Inappropriate or misleading advertisements.</li>
-              <li>Fraudulent activities.</li>
-              <li>Intellectual property violations.</li>
-              <li>Illegal or prohibited content.</li>
-            </ul>
-            <p>
-              The website reserves the right to remove any content or listings
-              that violate its policies.
-            </p>
-          </PolicySection>
+              <p>
+                Admin review helps reduce risk, but it does not guarantee
+                product safety, legality, quality, suitability, or performance.
+                Buyers and sellers remain responsible for their own decisions.
+              </p>
+            </PolicySection>
 
-          <PolicySection title="5. Disclaimer">
-            <p className="rounded-2xl bg-slate-50 p-5 font-semibold">
-              The website serves solely as an online platform connecting buyers
-              and sellers. The website is not responsible for any products,
-              transactions, payments, agreements, or disputes between users.
-            </p>
-          </PolicySection>
+            <PolicySection title="2. Seller Responsibility">
+              <p>
+                Sellers must provide accurate and complete information about the
+                item, including title, category, condition, photos, price,
+                expiry date, storage condition, location, documents, and any
+                known defects or risks.
+              </p>
 
-          <PolicySection title="6. Buyer Safety Advice">
-            <p>
-              Buyers are advised to meet sellers in a safe and trusted place,
-              such as a research center, laboratory, university, or official
-              workplace.
-            </p>
-            <p>
-              Buyers should check product condition, expiry date, storage
-              condition, supporting documents, and seller identity before
-              payment.
-            </p>
-            <p>
-              Ù†Ù†ØµØ­ Ø§Ù„Ù…Ø´ØªØ±ÙŠ Ø¨Ù…Ù‚Ø§Ø¨Ù„Ø© Ø§Ù„Ø¨Ø§Ø¦Ø¹ ÙÙŠ Ù…ÙƒØ§Ù† Ø¢Ù…Ù† ÙˆÙ…ÙˆØ«ÙˆÙ‚ Ù…Ø«Ù„ Ù…Ø±ÙƒØ² Ø¨Ø­Ø«ÙŠØŒ
-              Ù…Ø¹Ù…Ù„ØŒ Ø¬Ø§Ù…Ø¹Ø©ØŒ Ø£Ùˆ Ù…ÙƒØ§Ù† Ø¹Ù…Ù„ Ø±Ø³Ù…ÙŠØŒ ÙˆÙØ­Øµ Ø§Ù„Ù…Ù†ØªØ¬ ÙˆØ§Ù„Ù…Ø³ØªÙ†Ø¯Ø§Øª Ù‚Ø¨Ù„ Ø§Ù„Ø¯ÙØ¹.
-            </p>
-          </PolicySection>
-        </div>
+              <p>
+                Sellers confirm that they legally own the item or have authority
+                to sell it. Sellers are fully responsible for product accuracy,
+                ownership, legal compliance, and any documents they upload.
+              </p>
+            </PolicySection>
+
+            <PolicySection title="3. Prohibited Products">
+              <p>
+                Users must not list stolen, expired, contaminated, unsafe,
+                illegal, prohibited, or hazardous products.
+              </p>
+
+              <p>
+                LabFinds does not allow the sale of drugs, medical waste, human
+                or animal samples, blood, tissue, cultures, bacteria, viruses,
+                biological materials, radioactive materials, or any unsafe or
+                contaminated laboratory material.
+              </p>
+            </PolicySection>
+
+            <PolicySection title="4. Restricted or Regulated Products">
+              <p>
+                Medical devices, diagnostic kits, IVD products, chemicals,
+                biological materials, drugs, reagents, or regulated products
+                must not be listed unless the seller has valid legal documents
+                and the item is allowed to be sold under applicable laws and
+                regulations.
+              </p>
+
+              <p>
+                LabFinds admin may reject, freeze, hide, remove, or request more
+                documents for any listing that appears regulated, unsafe,
+                misleading, incomplete, or suspicious.
+              </p>
+            </PolicySection>
+
+            <PolicySection title="5. Admin Review and Removal Rights">
+              <p>
+                LabFinds admin may approve, reject, freeze, hide, edit status,
+                or remove listings when needed to protect users and the
+                platform.
+              </p>
+
+              <p>
+                Admin may also review seller verification requests, reports,
+                complaints, contact messages, and seller reviews. Admin
+                decisions are based on available information and platform safety
+                rules.
+              </p>
+            </PolicySection>
+
+            <PolicySection title="6. Buyer Safety Advice">
+              <p>
+                Buyers should inspect the product before payment. Buyers should
+                check product condition, expiry date, storage condition,
+                supporting documents, seller identity, quantity, packaging, and
+                any legal or regulatory requirements before completing a deal.
+              </p>
+
+              <p>
+                Buyers are advised to meet sellers in a safe and trusted place,
+                such as a research center, laboratory, university, company,
+                hospital, or official workplace.
+              </p>
+
+              <p>
+                Buyers must not buy prohibited, unsafe, expired, contaminated,
+                stolen, hazardous, or unlicensed regulated products.
+              </p>
+            </PolicySection>
+
+            <PolicySection title="7. Login Required">
+              <p>
+                Users must be registered and signed in before sending requests,
+                complaints, misleading product reports, listing products, or
+                contacting sellers through WhatsApp.
+              </p>
+
+              <p>
+                This rule helps reduce anonymous abuse, fake complaints, unsafe
+                transactions, and fraud.
+              </p>
+            </PolicySection>
+
+            <PolicySection title="8. Seller Verification">
+              <p>
+                Seller verification is used to increase trust. LabFinds may ask
+                for an official email, work ID, company registration, lab proof,
+                university proof, or organization proof.
+              </p>
+
+              <p>
+                LabFinds does not request national ID or passport by default.
+                Uploaded verification documents are not shown publicly and are
+                reviewed only by admin for verification purposes.
+              </p>
+            </PolicySection>
+
+            <PolicySection title="9. Complaints and Reports">
+              <p>
+                Logged-in users can submit complaints, misleading product
+                reports, buyer issues, seller issues, or help requests.
+              </p>
+
+              <p>
+                Admin may reply to the request, update its status, and notify
+                the user through their LabFinds notification center. Users can
+                see admin replies from their My Requests page.
+              </p>
+            </PolicySection>
+
+            <PolicySection title="10. Reviews">
+              <p>
+                Seller reviews must be honest, based on real experience, and
+                must not include insults, private information, threats, fake
+                claims, or unsupported accusations.
+              </p>
+
+              <p>
+                Reviews may require admin approval before appearing publicly.
+                Admin may reject or remove reviews that are abusive, misleading,
+                fake, or unsafe.
+              </p>
+            </PolicySection>
+
+            <PolicySection title="11. Payments and Transactions">
+              <p>
+                LabFinds does not handle payments between buyers and sellers.
+                Buyers and sellers are responsible for agreeing on payment,
+                delivery, inspection, documents, and final transaction details.
+              </p>
+
+              <p>
+                Buyers should avoid sending money before inspection unless they
+                fully trust the seller and understand the risk.
+              </p>
+            </PolicySection>
+
+            <PolicySection title="12. Disclaimer">
+              <div className="rounded-3xl bg-slate-50 p-5 font-bold leading-8 text-slate-800">
+                The website serves solely as an online platform connecting
+                buyers and sellers. The website is not responsible for any
+                products, transactions, payments, agreements, or disputes
+                between users.
+              </div>
+            </PolicySection>
+          </div>
+        </section>
       </div>
     </main>
   );
@@ -130,9 +212,12 @@ function PolicySection({
   children: React.ReactNode;
 }) {
   return (
-    <section className="mt-8 border-t border-slate-200 pt-8">
+    <section className="border-t border-slate-200 pt-8 first:border-t-0 first:pt-0">
       <h2 className="text-2xl font-black">{title}</h2>
-      <div className="mt-4 space-y-3 leading-7 text-slate-700">{children}</div>
+
+      <div className="mt-4 grid gap-4 leading-8 text-slate-700">
+        {children}
+      </div>
     </section>
   );
 }

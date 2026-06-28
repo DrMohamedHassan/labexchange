@@ -14,10 +14,13 @@ import {
   PRICE_CURRENCY_OPTIONS,
 } from "@/lib/currencies";
 import Link from "next/link";
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
 export default function AddListingPage() {
+  const [isLoadingUser, setIsLoadingUser] = useState(true);
+  const [loggedInUserId, setLoggedInUserId] = useState("");
+
   const [title, setTitle] = useState("");
   const [brand, setBrand] = useState("");
   const [quantity, setQuantity] = useState("");
@@ -73,6 +76,21 @@ export default function AddListingPage() {
   const allSafetyTermsAccepted =
     safetyNotProhibited && safetyBuyerCheck && safetyPlatformPolicy;
 
+  useEffect(() => {
+    loadUser();
+  }, []);
+
+  async function loadUser() {
+    setIsLoadingUser(true);
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    setLoggedInUserId(user?.id || "");
+    setIsLoadingUser(false);
+  }
+
   function handleCountryChange(newCountry: string) {
     setCountry(newCountry);
     setPriceCurrency(getDefaultCurrencyForCountry(newCountry));
@@ -118,6 +136,11 @@ export default function AddListingPage() {
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
+    if (!loggedInUserId) {
+      setMessage("You must login before adding a listing.");
+      return;
+    }
 
     if (!title || !category || !condition || !country || !city || !price) {
       setMessage("Please fill all required product fields.");
@@ -275,6 +298,7 @@ export default function AddListingPage() {
       setMessage(
         "Listing submitted successfully. It will appear publicly after admin approval."
       );
+
       setIsSubmitting(false);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Something went wrong.");
@@ -303,293 +327,328 @@ export default function AddListingPage() {
             approved by admin before it appears publicly.
           </p>
 
-          <form onSubmit={handleSubmit} className="mt-8 grid gap-6">
-            <InputField
-              label="Product Title *"
-              value={title}
-              onChange={setTitle}
-              placeholder="Example: qPCR Master Mix 2X"
-            />
-
-            <div className="grid gap-5 md:grid-cols-2">
-              <InputField
-                label="Brand"
-                value={brand}
-                onChange={setBrand}
-                placeholder="Example: Thermo Fisher"
-              />
-
-              <InputField
-                label="Quantity"
-                value={quantity}
-                onChange={setQuantity}
-                placeholder="Example: 2 boxes / 5 packs"
-              />
+          {isLoadingUser ? (
+            <div className="mt-8 rounded-3xl bg-slate-50 p-8">
+              <p className="font-bold text-slate-600">Checking login...</p>
             </div>
+          ) : !loggedInUserId ? (
+            <div className="mt-8 rounded-3xl border border-amber-200 bg-amber-50 p-8 text-amber-900">
+              <h2 className="text-2xl font-black">
+                Login required before listing
+              </h2>
 
-            <div className="grid gap-5 md:grid-cols-2">
-              <SelectField
-                label="Category *"
-                value={category}
-                onChange={setCategory}
-                options={LISTING_CATEGORIES}
-              />
+              <p className="mt-3 leading-7">
+                You must create an account and login before adding a listing.
+                Anonymous sellers are not allowed on LabFinds.
+              </p>
 
-              <SelectField
-                label="Condition *"
-                value={condition}
-                onChange={setCondition}
-                options={CONDITION_OPTIONS}
-              />
+              <div className="mt-6 flex flex-wrap gap-3">
+                <Link
+                  href="/login"
+                  className="rounded-2xl bg-emerald-700 px-6 py-3 font-black text-white hover:bg-emerald-800"
+                >
+                  Login
+                </Link>
+
+                <Link
+                  href="/register"
+                  className="rounded-2xl border border-slate-300 bg-white px-6 py-3 font-black text-slate-800 hover:border-emerald-600"
+                >
+                  Create Account
+                </Link>
+              </div>
             </div>
+          ) : (
+            <form onSubmit={handleSubmit} className="mt-8 grid gap-6">
+              <InputField
+                label="Product Title *"
+                value={title}
+                onChange={setTitle}
+                placeholder="Example: qPCR Master Mix 2X"
+              />
 
-            <div className="grid gap-5 md:grid-cols-2">
-              <SelectField
-                label="Country *"
-                value={country}
-                onChange={handleCountryChange}
-                options={COUNTRY_OPTIONS}
+              <div className="grid gap-5 md:grid-cols-2">
+                <InputField
+                  label="Brand"
+                  value={brand}
+                  onChange={setBrand}
+                  placeholder="Example: Thermo Fisher"
+                />
+
+                <InputField
+                  label="Quantity"
+                  value={quantity}
+                  onChange={setQuantity}
+                  placeholder="Example: 2 boxes / 5 packs"
+                />
+              </div>
+
+              <div className="grid gap-5 md:grid-cols-2">
+                <SelectField
+                  label="Category *"
+                  value={category}
+                  onChange={setCategory}
+                  options={LISTING_CATEGORIES}
+                />
+
+                <SelectField
+                  label="Condition *"
+                  value={condition}
+                  onChange={setCondition}
+                  options={CONDITION_OPTIONS}
+                />
+              </div>
+
+              <div className="grid gap-5 md:grid-cols-2">
+                <SelectField
+                  label="Country *"
+                  value={country}
+                  onChange={handleCountryChange}
+                  options={COUNTRY_OPTIONS}
+                />
+
+                <InputField
+                  label="City *"
+                  value={city}
+                  onChange={setCity}
+                  placeholder="Example: Cairo / Riyadh / Dubai"
+                />
+              </div>
+
+              <div className="grid gap-5 md:grid-cols-2">
+                <InputField
+                  label="Price *"
+                  value={price}
+                  onChange={setPrice}
+                  placeholder="Example: 2500"
+                  type="number"
+                />
+
+                <div>
+                  <label className="mb-2 block font-bold">
+                    Price Currency *
+                  </label>
+
+                  <select
+                    value={priceCurrency}
+                    onChange={(event) => setPriceCurrency(event.target.value)}
+                    className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-emerald-700"
+                  >
+                    {PRICE_CURRENCY_OPTIONS.map((currency) => (
+                      <option key={currency.code} value={currency.code}>
+                        {currency.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <InputField
+                label="Expiry Date"
+                value={expiryDate}
+                onChange={setExpiryDate}
+                placeholder=""
+                type="date"
               />
 
               <InputField
-                label="City *"
-                value={city}
-                onChange={setCity}
-                placeholder="Example: Cairo / Riyadh / Dubai"
-              />
-            </div>
-
-            <div className="grid gap-5 md:grid-cols-2">
-              <InputField
-                label="Price *"
-                value={price}
-                onChange={setPrice}
-                placeholder="Example: 2500"
-                type="number"
+                label="Storage Condition"
+                value={storageCondition}
+                onChange={setStorageCondition}
+                placeholder="Example: Stored at 2-8°C / room temperature"
               />
 
               <div>
-                <label className="mb-2 block font-bold">Price Currency *</label>
+                <label className="mb-2 block font-bold">Description</label>
 
-                <select
-                  value={priceCurrency}
-                  onChange={(event) => setPriceCurrency(event.target.value)}
+                <textarea
+                  rows={6}
+                  placeholder="Describe product condition, storage, expiry, reason for selling, and important notes."
+                  value={description}
+                  onChange={(event) => setDescription(event.target.value)}
                   className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-emerald-700"
-                >
-                  {PRICE_CURRENCY_OPTIONS.map((currency) => (
-                    <option key={currency.code} value={currency.code}>
-                      {currency.label}
-                    </option>
-                  ))}
-                </select>
+                />
               </div>
-            </div>
 
-            <InputField
-              label="Expiry Date"
-              value={expiryDate}
-              onChange={setExpiryDate}
-              placeholder=""
-              type="date"
-            />
+              <div className="grid gap-5 md:grid-cols-2">
+                <InputField
+                  label="Seller Name *"
+                  value={sellerName}
+                  onChange={setSellerName}
+                  placeholder="Your name or company name"
+                />
 
-            <InputField
-              label="Storage Condition"
-              value={storageCondition}
-              onChange={setStorageCondition}
-              placeholder="Example: Stored at 2-8°C / room temperature"
-            />
+                <InputField
+                  label="WhatsApp Phone *"
+                  value={sellerPhone}
+                  onChange={setSellerPhone}
+                  placeholder="Example: 201001234567"
+                />
+              </div>
 
-            <div>
-              <label className="mb-2 block font-bold">Description</label>
+              {isUsedProduct && (
+                <div className="rounded-3xl border border-amber-200 bg-amber-50 p-5">
+                  <h2 className="font-black text-amber-900">
+                    Used Product Verification
+                  </h2>
 
-              <textarea
-                rows={6}
-                placeholder="Describe product condition, storage, expiry, reason for selling, and important notes."
-                value={description}
-                onChange={(event) => setDescription(event.target.value)}
-                className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-emerald-700"
-              />
-            </div>
+                  <p className="mt-2 text-sm leading-6 text-amber-900">
+                    Because this item is used, you must honestly declare its
+                    working condition and any defects.
+                  </p>
 
-            <div className="grid gap-5 md:grid-cols-2">
-              <InputField
-                label="Seller Name *"
-                value={sellerName}
-                onChange={setSellerName}
-                placeholder="Your name or company name"
-              />
+                  <textarea
+                    rows={4}
+                    placeholder="Write notes about working condition, defects, usage period, calibration, or testing."
+                    value={usedVerificationNotes}
+                    onChange={(event) =>
+                      setUsedVerificationNotes(event.target.value)
+                    }
+                    className="mt-4 w-full rounded-2xl border border-amber-200 bg-white px-4 py-3 outline-none focus:border-amber-600"
+                  />
 
-              <InputField
-                label="WhatsApp Phone *"
-                value={sellerPhone}
-                onChange={setSellerPhone}
-                placeholder="Example: 201001234567"
-              />
-            </div>
+                  <CheckboxField
+                    checked={usedVerificationAcknowledged}
+                    onChange={setUsedVerificationAcknowledged}
+                    label="I confirm that I described the used product condition honestly and clearly."
+                  />
+                </div>
+              )}
 
-            {isUsedProduct && (
+              <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
+                <h2 className="text-xl font-black">Product Images</h2>
+
+                <p className="mt-2 text-sm leading-6 text-slate-600">
+                  Upload a clear main product image. You may also add up to 3
+                  additional product figures.
+                </p>
+
+                <div className="mt-5 grid gap-5 md:grid-cols-2">
+                  <FileField
+                    label="Main Product Image *"
+                    onChange={setProductImage}
+                  />
+
+                  <MultipleFileField
+                    label="Additional Product Figures — maximum 3"
+                    onChange={handleProductFigures}
+                  />
+                </div>
+
+                {productFigures.length > 0 && (
+                  <p className="mt-4 rounded-2xl bg-white p-4 text-sm font-bold text-slate-700">
+                    Selected product figures: {productFigures.length} / 3
+                  </p>
+                )}
+              </div>
+
+              <div className="grid gap-5 md:grid-cols-2">
+                <FileField
+                  label="Optional purchase voucher / invoice / ownership proof"
+                  onChange={setVoucherImage}
+                />
+
+                <FileField
+                  label="Optional scientific, regulatory, or product document"
+                  onChange={setProofImage}
+                />
+              </div>
+
+              <div className="rounded-3xl border border-red-200 bg-red-50 p-5">
+                <h2 className="text-xl font-black text-red-900">
+                  Seller legal confirmations
+                </h2>
+
+                <p className="mt-2 text-sm leading-6 text-red-900">
+                  You must accept all confirmations before submitting the listing.
+                </p>
+
+                <div className="mt-5 grid gap-4">
+                  <CheckboxField
+                    checked={legalOwnership}
+                    onChange={setLegalOwnership}
+                    label="I confirm I legally own this item or have authority to sell it."
+                  />
+
+                  <CheckboxField
+                    checked={notStolenContaminatedHazardous}
+                    onChange={setNotStolenContaminatedHazardous}
+                    label="I confirm this item is not stolen, contaminated, expired, prohibited, or hazardous."
+                  />
+
+                  <CheckboxField
+                    checked={regulatedDocuments}
+                    onChange={setRegulatedDocuments}
+                    label="I confirm this item is not a medical device, diagnostic kit, IVD, chemical, biological material, drug, or regulated product unless I upload valid legal documents."
+                  />
+
+                  <CheckboxField
+                    checked={accuracyAcknowledged}
+                    onChange={setAccuracyAcknowledged}
+                    label="I confirm all photos, price, condition, expiry, storage, and description are accurate."
+                  />
+
+                  <CheckboxField
+                    checked={adminRemovalAcknowledged}
+                    onChange={setAdminRemovalAcknowledged}
+                    label="I understand admin may reject, freeze, hide, or remove the listing."
+                  />
+
+                  <CheckboxField
+                    checked={sellerResponsibility}
+                    onChange={setSellerResponsibility}
+                    label="I accept that I am responsible for product accuracy and legal compliance."
+                  />
+                </div>
+              </div>
+
               <div className="rounded-3xl border border-amber-200 bg-amber-50 p-5">
-                <h2 className="font-black text-amber-900">
-                  Used Product Verification
+                <h2 className="text-xl font-black text-amber-900">
+                  Safety and platform terms
                 </h2>
 
                 <p className="mt-2 text-sm leading-6 text-amber-900">
-                  Because this item is used, you must honestly declare its
-                  working condition and any defects.
+                  These platform safety terms are also required before submitting
+                  your listing.
                 </p>
 
-                <textarea
-                  rows={4}
-                  placeholder="Write notes about working condition, defects, usage period, calibration, or testing."
-                  value={usedVerificationNotes}
-                  onChange={(event) =>
-                    setUsedVerificationNotes(event.target.value)
-                  }
-                  className="mt-4 w-full rounded-2xl border border-amber-200 bg-white px-4 py-3 outline-none focus:border-amber-600"
-                />
+                <div className="mt-5 grid gap-4">
+                  <CheckboxField
+                    checked={safetyNotProhibited}
+                    onChange={setSafetyNotProhibited}
+                    label="I confirm that this item is not prohibited, dangerous, illegal, or restricted."
+                  />
 
-                <CheckboxField
-                  checked={usedVerificationAcknowledged}
-                  onChange={setUsedVerificationAcknowledged}
-                  label="I confirm that I described the used product condition honestly and clearly."
-                />
-              </div>
-            )}
+                  <CheckboxField
+                    checked={safetyBuyerCheck}
+                    onChange={setSafetyBuyerCheck}
+                    label="I understand that buyers must check the product before payment and the website is only an intermediary platform."
+                  />
 
-            <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
-              <h2 className="text-xl font-black">Product Images</h2>
+                  <CheckboxField
+                    checked={safetyPlatformPolicy}
+                    onChange={setSafetyPlatformPolicy}
+                    label="I accept platform policies and agree that admin can reject or remove unsafe listings."
+                  />
+                </div>
 
-              <p className="mt-2 text-sm leading-6 text-slate-600">
-                Upload a clear main product image. You may also add up to 3
-                additional product figures.
-              </p>
-
-              <div className="mt-5 grid gap-5 md:grid-cols-2">
-                <FileField
-                  label="Main Product Image *"
-                  onChange={setProductImage}
-                />
-
-                <MultipleFileField
-                  label="Additional Product Figures — maximum 3"
-                  onChange={handleProductFigures}
-                />
+                <Link
+                  href="/policies"
+                  className="mt-5 inline-block rounded-2xl bg-white px-5 py-3 text-sm font-black text-amber-900 shadow-sm hover:bg-amber-100"
+                >
+                  Read policies
+                </Link>
               </div>
 
-              {productFigures.length > 0 && (
-                <p className="mt-4 rounded-2xl bg-white p-4 text-sm font-bold text-slate-700">
-                  Selected product figures: {productFigures.length} / 3
-                </p>
-              )}
-            </div>
-
-            <div className="grid gap-5 md:grid-cols-2">
-              <FileField
-                label="Optional purchase voucher / invoice / ownership proof"
-                onChange={setVoucherImage}
-              />
-
-              <FileField
-                label="Optional scientific, regulatory, or product document"
-                onChange={setProofImage}
-              />
-            </div>
-
-            <div className="rounded-3xl border border-red-200 bg-red-50 p-5">
-              <h2 className="text-xl font-black text-red-900">
-                Seller legal confirmations
-              </h2>
-
-              <p className="mt-2 text-sm leading-6 text-red-900">
-                You must accept all confirmations before submitting the listing.
-              </p>
-
-              <div className="mt-5 grid gap-4">
-                <CheckboxField
-                  checked={legalOwnership}
-                  onChange={setLegalOwnership}
-                  label="I confirm I legally own this item or have authority to sell it."
-                />
-
-                <CheckboxField
-                  checked={notStolenContaminatedHazardous}
-                  onChange={setNotStolenContaminatedHazardous}
-                  label="I confirm this item is not stolen, contaminated, expired, prohibited, or hazardous."
-                />
-
-                <CheckboxField
-                  checked={regulatedDocuments}
-                  onChange={setRegulatedDocuments}
-                  label="I confirm this item is not a medical device, diagnostic kit, IVD, chemical, biological material, drug, or regulated product unless I upload valid legal documents."
-                />
-
-                <CheckboxField
-                  checked={accuracyAcknowledged}
-                  onChange={setAccuracyAcknowledged}
-                  label="I confirm all photos, price, condition, expiry, storage, and description are accurate."
-                />
-
-                <CheckboxField
-                  checked={adminRemovalAcknowledged}
-                  onChange={setAdminRemovalAcknowledged}
-                  label="I understand admin may reject, freeze, hide, or remove the listing."
-                />
-
-                <CheckboxField
-                  checked={sellerResponsibility}
-                  onChange={setSellerResponsibility}
-                  label="I accept that I am responsible for product accuracy and legal compliance."
-                />
-              </div>
-            </div>
-
-            <div className="rounded-3xl border border-amber-200 bg-amber-50 p-5">
-              <h2 className="text-xl font-black text-amber-900">
-                Safety and platform terms
-              </h2>
-
-              <p className="mt-2 text-sm leading-6 text-amber-900">
-                These platform safety terms are also required before submitting
-                your listing.
-              </p>
-
-              <div className="mt-5 grid gap-4">
-                <CheckboxField
-                  checked={safetyNotProhibited}
-                  onChange={setSafetyNotProhibited}
-                  label="I confirm that this item is not prohibited, dangerous, illegal, or restricted."
-                />
-
-                <CheckboxField
-                  checked={safetyBuyerCheck}
-                  onChange={setSafetyBuyerCheck}
-                  label="I understand that buyers must check the product before payment and the website is only an intermediary platform."
-                />
-
-                <CheckboxField
-                  checked={safetyPlatformPolicy}
-                  onChange={setSafetyPlatformPolicy}
-                  label="I accept platform policies and agree that admin can reject or remove unsafe listings."
-                />
-              </div>
-
-              <Link
-                href="/policies"
-                className="mt-5 inline-block rounded-2xl bg-white px-5 py-3 text-sm font-black text-amber-900 shadow-sm hover:bg-amber-100"
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="rounded-2xl bg-emerald-700 px-6 py-4 font-black text-white hover:bg-emerald-800 disabled:cursor-not-allowed disabled:bg-slate-400"
               >
-                Read policies
-              </Link>
-            </div>
-
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="rounded-2xl bg-emerald-700 px-6 py-4 font-black text-white hover:bg-emerald-800 disabled:cursor-not-allowed disabled:bg-slate-400"
-            >
-              {isSubmitting ? "Submitting..." : "Submit for Admin Review"}
-            </button>
-          </form>
+                {isSubmitting ? "Submitting..." : "Submit for Admin Review"}
+              </button>
+            </form>
+          )}
 
           {message && (
             <p className="mt-6 rounded-2xl bg-slate-100 p-4 font-bold text-slate-700">
