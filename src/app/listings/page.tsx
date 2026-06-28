@@ -1,5 +1,7 @@
 import Header from "@/components/Header";
-import ListingCard from "@/components/ListingCard";
+import ListingsCountryView, {
+  CountryListing,
+} from "@/components/ListingsCountryView";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 
@@ -62,66 +64,16 @@ export default async function AllListingsPage() {
           </h1>
 
           <p className="mt-4 max-w-3xl leading-7 text-slate-600">
-            Browse approved used and unused lab supplies. Click Details to view
-            product details, or Buy to open the buyer safety confirmation before
-            WhatsApp.
+            Browse approved used and unused lab supplies. Results will be shown
+            according to your selected country.
           </p>
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-6 py-10">
-        <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <h2 className="text-2xl font-black">All approved items</h2>
-
-            <p className="mt-2 text-sm text-slate-600">
-              Total items: {listings.length}
-            </p>
-          </div>
-
-          <Link
-            href="/add-listing"
-            className="rounded-2xl bg-emerald-700 px-6 py-3 font-black text-white hover:bg-emerald-800"
-          >
-            + Sell Your Item
-          </Link>
-        </div>
-
-        {error ? (
-          <div className="rounded-3xl bg-red-50 p-6 font-bold text-red-700">
-            Database error: {error.message}
-          </div>
-        ) : listings.length > 0 ? (
-          <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
-            {listings.map((listing) => (
-              <ListingCard
-                key={listing.id}
-                id={listing.id}
-                sellerId={listing.seller_id}
-                sellerPhone={listing.seller_phone}
-                title={listing.title || "Untitled item"}
-                category={`${listing.category || "General"} · ${
-                  listing.country || "Country not set"
-                }`}
-                condition={listing.condition || "Condition not provided"}
-                city={listing.city || "City not provided"}
-                price={listing.price}
-                priceCurrency={listing.price_currency}
-                imageUrl={listing.product_image_url || listing.image_url}
-                status={listing.status || "approved"}
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="rounded-3xl bg-white p-8 shadow-sm">
-            <h3 className="text-2xl font-black">No approved items yet</h3>
-
-            <p className="mt-3 text-slate-600">
-              Once admin approves seller listings, they will appear here.
-            </p>
-          </div>
-        )}
-      </section>
+      <ListingsCountryView
+        listings={listings as CountryListing[]}
+        errorMessage={error ? error.message : null}
+      />
     </main>
   );
 }

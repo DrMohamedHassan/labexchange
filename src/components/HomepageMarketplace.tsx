@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { FormEvent } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import ListingCard from "@/components/ListingCard";
 
@@ -60,6 +60,36 @@ export default function HomepageMarketplace({
   errorMessage?: string | null;
 }) {
   const router = useRouter();
+  const [selectedCountry, setSelectedCountry] = useState("");
+
+  useEffect(() => {
+    function syncSelectedCountry() {
+      const savedCountry = localStorage.getItem("labfinds_country") || "";
+
+      if (
+        savedCountry &&
+        savedCountry.toLowerCase() !== "all countries" &&
+        savedCountry.toLowerCase() !== "all"
+      ) {
+        setSelectedCountry(savedCountry);
+      } else {
+        setSelectedCountry("");
+      }
+    }
+
+    syncSelectedCountry();
+
+    window.addEventListener("storage", syncSelectedCountry);
+    window.addEventListener("focus", syncSelectedCountry);
+
+    const interval = window.setInterval(syncSelectedCountry, 1000);
+
+    return () => {
+      window.removeEventListener("storage", syncSelectedCountry);
+      window.removeEventListener("focus", syncSelectedCountry);
+      window.clearInterval(interval);
+    };
+  }, []);
 
   function handleSearch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -79,7 +109,23 @@ export default function HomepageMarketplace({
     router.push(`/search?q=${encodeURIComponent(categoryName)}`);
   }
 
-  const latestListings = listings.slice(0, 8);
+  function changeCountry() {
+    localStorage.removeItem("labfinds_country");
+    setSelectedCountry("");
+    window.location.reload();
+  }
+
+  const countryListings = useMemo(() => {
+    if (!selectedCountry) {
+      return listings;
+    }
+
+    return listings.filter((listing) =>
+      isSameCountry(listing.country, selectedCountry)
+    );
+  }, [listings, selectedCountry]);
+
+  const latestListings = countryListings.slice(0, 8);
 
   return (
     <>
@@ -96,8 +142,7 @@ export default function HomepageMarketplace({
 
                 <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
                   Search by product name, category, city, country, brand, or
-                  keyword. Search is case-insensitive and tries to find close
-                  matches even with small spelling mistakes.
+                  keyword. Results will match your selected country.
                 </p>
               </div>
 
@@ -124,6 +169,22 @@ export default function HomepageMarketplace({
               </div>
             </div>
           </form>
+
+          {selectedCountry && (
+            <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-emerald-50 p-4">
+              <p className="text-sm font-black text-emerald-800">
+                Showing products for: {selectedCountry}
+              </p>
+
+              <button
+                type="button"
+                onClick={changeCountry}
+                className="rounded-xl bg-white px-4 py-2 text-sm font-black text-emerald-700 shadow-sm hover:bg-emerald-100"
+              >
+                Change country
+              </button>
+            </div>
+          )}
         </div>
       </section>
 
@@ -188,7 +249,9 @@ export default function HomepageMarketplace({
             <h2 className="text-2xl font-black">Latest Listings</h2>
 
             <p className="mt-2 text-sm text-slate-600">
-              Latest approved LabFinds listings.
+              {selectedCountry
+                ? `Latest approved listings in ${selectedCountry}.`
+                : "Latest approved LabFinds listings."}
             </p>
           </div>
 
@@ -223,11 +286,14 @@ export default function HomepageMarketplace({
             ))
           ) : (
             <div className="rounded-3xl bg-white p-8 shadow-sm md:col-span-2 lg:col-span-4">
-              <h3 className="text-2xl font-black">No approved listings yet</h3>
+              <h3 className="text-2xl font-black">
+                No approved listings found
+              </h3>
 
               <p className="mt-3 max-w-2xl text-slate-600">
-                Once sellers add real LabFinds listings and admin approves them,
-                they will appear here.
+                {selectedCountry
+                  ? `There are no approved products in ${selectedCountry} yet. Change country or check again later.`
+                  : "Once sellers add real LabFinds listings and admin approves them, they will appear here."}
               </p>
             </div>
           )}
@@ -235,4 +301,17 @@ export default function HomepageMarketplace({
       </section>
     </>
   );
+}
+
+function normalizeCountry(value: string | null | undefined) {
+  return String(value || "")
+    .trim()
+    .toLowerCase();
+}
+
+function isSameCountry(
+  listingCountry: string | null | undefined,
+  selectedCountry: string
+) {
+  return normalizeCountry(listingCountry) === normalizeCountry(selectedCountry);
 }
