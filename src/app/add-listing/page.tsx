@@ -21,12 +21,14 @@ export default function AddListingPage() {
   const [title, setTitle] = useState("");
   const [brand, setBrand] = useState("");
   const [quantity, setQuantity] = useState("");
-  const [category, setCategory] = useState(DEFAULT_LISTING_CATEGORY);
-  const [condition, setCondition] = useState(DEFAULT_CONDITION);
-  const [country, setCountry] = useState(DEFAULT_COUNTRY);
+  const [category, setCategory] = useState<string>(DEFAULT_LISTING_CATEGORY);
+  const [condition, setCondition] = useState<string>(DEFAULT_CONDITION);
+  const [country, setCountry] = useState<string>(DEFAULT_COUNTRY);
   const [city, setCity] = useState("");
   const [price, setPrice] = useState("");
-  const [priceCurrency, setPriceCurrency] = useState(DEFAULT_PRICE_CURRENCY);
+  const [priceCurrency, setPriceCurrency] = useState<string>(
+    DEFAULT_PRICE_CURRENCY
+  );
   const [expiryDate, setExpiryDate] = useState("");
   const [storageCondition, setStorageCondition] = useState("");
   const [description, setDescription] = useState("");
@@ -47,7 +49,8 @@ export default function AddListingPage() {
     useState(false);
   const [regulatedDocuments, setRegulatedDocuments] = useState(false);
   const [accuracyAcknowledged, setAccuracyAcknowledged] = useState(false);
-  const [adminRemovalAcknowledged, setAdminRemovalAcknowledged] = useState(false);
+  const [adminRemovalAcknowledged, setAdminRemovalAcknowledged] =
+    useState(false);
   const [sellerResponsibility, setSellerResponsibility] = useState(false);
 
   const [safetyNotProhibited, setSafetyNotProhibited] = useState(false);
@@ -329,14 +332,14 @@ export default function AddListingPage() {
                 label="Category *"
                 value={category}
                 onChange={setCategory}
-                options={LISTING_CATEGORIES as unknown as string[]}
+                options={LISTING_CATEGORIES}
               />
 
               <SelectField
                 label="Condition *"
                 value={condition}
                 onChange={setCondition}
-                options={CONDITION_OPTIONS as unknown as string[]}
+                options={CONDITION_OPTIONS}
               />
             </div>
 
@@ -345,7 +348,7 @@ export default function AddListingPage() {
                 label="Country *"
                 value={country}
                 onChange={handleCountryChange}
-                options={COUNTRY_OPTIONS as unknown as string[]}
+                options={COUNTRY_OPTIONS}
               />
 
               <InputField
@@ -366,9 +369,7 @@ export default function AddListingPage() {
               />
 
               <div>
-                <label className="mb-2 block font-bold">
-                  Price Currency *
-                </label>
+                <label className="mb-2 block font-bold">Price Currency *</label>
 
                 <select
                   value={priceCurrency}
@@ -638,7 +639,7 @@ function SelectField({
   label: string;
   value: string;
   onChange: (value: string) => void;
-  options: string[];
+  options: readonly string[];
 }) {
   return (
     <div>
@@ -650,7 +651,9 @@ function SelectField({
         className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-emerald-700"
       >
         {options.map((item) => (
-          <option key={item}>{item}</option>
+          <option key={item} value={item}>
+            {item}
+          </option>
         ))}
       </select>
     </div>
