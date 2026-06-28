@@ -1,30 +1,21 @@
 export const LISTING_CATEGORIES = [
-  "PCR Reagents",
-  "qPCR Reagents",
-  "Primers & Probes",
-  "DNA/RNA Extraction",
-  "Electrophoresis Consumables",
-  "Cloning & Transformation",
-  "Sequencing & NGS",
-  "Cell Culture & Tissue Engineering",
-  "Immunology & Protein Analysis",
-  "Plasticware",
-  "Standards & Controls",
-  "Agricultural Biotechnology",
-  "Equipment",
-  "Others",
+  "Molecular Biology",
+  "Chemicals & Reagents",
+  "Cell Culture & Cell Lines",
+  "Lab Supplies & Equipment",
 ] as const;
+
+export const DEFAULT_LISTING_CATEGORY = LISTING_CATEGORIES[0];
 
 export const CONDITION_OPTIONS = [
-  "New",
-  "Unused / Sealed",
-  "Used - Seller Verified Working",
-  "Used - Like New",
-  "Used - Very Good",
-  "Used - Good",
-  "Used - Fair",
+  "New / Sealed",
+  "New / Open Box",
+  "Unused",
+  "Used - Working",
+  "Used - Needs Check",
 ] as const;
 
-export const DEFAULT_LISTING_CATEGORY = "PCR Reagents";
+export const DEFAULT_CONDITION = CONDITION_OPTIONS[0];
 
-export const DEFAULT_CONDITION = "Unused / Sealed";
+export type ListingCategory = (typeof LISTING_CATEGORIES)[number];
+export type ListingCondition = (typeof CONDITION_OPTIONS)[number];

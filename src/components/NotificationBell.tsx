@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
@@ -13,7 +13,15 @@ type AdminNotification = {
   badgeClassName: string;
 };
 
+type AdminReadRow = {
+  notification_key: string;
+  last_read_at: string | null;
+};
+
 export default function NotificationBell() {
+  const router = useRouter();
+
+  const [adminId, setAdminId] = useState("");
   const [isAdmin, setIsAdmin] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -26,7 +34,7 @@ export default function NotificationBell() {
 
   useEffect(() => {
     let mounted = true;
-    let adminValue = false;
+    let loadedAdminId = "";
 
     async function checkAdminAndLoad() {
       try {
@@ -39,6 +47,7 @@ export default function NotificationBell() {
         if (!user) {
           if (!mounted) return;
 
+          setAdminId("");
           setIsAdmin(false);
           setIsLoading(false);
           return;
@@ -52,20 +61,24 @@ export default function NotificationBell() {
 
         if (!mounted) return;
 
-        adminValue = profile?.role === "admin";
-        setIsAdmin(adminValue);
+        const admin = profile?.role === "admin";
 
-        if (adminValue) {
-          await loadCounts();
+        setAdminId(user.id);
+        setIsAdmin(admin);
+        loadedAdminId = user.id;
+
+        if (admin) {
+          await loadCounts(user.id);
         }
 
         if (!mounted) return;
         setIsLoading(false);
       } catch (error) {
-        console.error("Notification loading failed:", error);
+        console.error("Admin notification loading failed:", error);
 
         if (!mounted) return;
 
+        setAdminId("");
         setIsAdmin(false);
         setIsLoading(false);
       }
@@ -74,8 +87,8 @@ export default function NotificationBell() {
     checkAdminAndLoad();
 
     const interval = window.setInterval(() => {
-      if (adminValue) {
-        loadCounts();
+      if (loadedAdminId) {
+        loadCounts(loadedAdminId);
       }
     }, 30000);
 
@@ -85,32 +98,84 @@ export default function NotificationBell() {
     };
   }, []);
 
-  async function loadCounts() {
+  async function getLastReadMap(currentAdminId: string) {
+    const { data } = await supabase
+      .from("admin_notification_reads")
+      .select("notification_key, last_read_at")
+      .eq("admin_id", currentAdminId);
+
+    const readRows = (data || []) as AdminReadRow[];
+
+    return readRows.reduce<Record<string, string>>((map, item) => {
+      if (item.notification_key && item.last_read_at) {
+        map[item.notification_key] = item.last_read_at;
+      }
+
+      return map;
+    }, {});
+  }
+
+  async function loadCounts(currentAdminId: string) {
     try {
-      const { count: pendingVerifications } = await supabase
+      const lastReadMap = await getLastReadMap(currentAdminId);
+
+      let verificationQuery = supabase
         .from("profiles")
         .select("id", { count: "exact", head: true })
         .eq("verification_status", "pending");
 
-      const { count: pendingListings } = await supabase
+      if (lastReadMap.verifications) {
+        verificationQuery = verificationQuery.gte(
+          "verification_requested_at",
+          lastReadMap.verifications
+        );
+      }
+
+      const { count: pendingVerifications } = await verificationQuery;
+
+      let listingQuery = supabase
         .from("listings")
         .select("id", { count: "exact", head: true })
         .eq("status", "pending");
 
-      const { count: pendingContacts } = await supabase
+      if (lastReadMap.listings) {
+        listingQuery = listingQuery.gte("created_at", lastReadMap.listings);
+      }
+
+      const { count: pendingListings } = await listingQuery;
+
+      let contactQuery = supabase
         .from("contact_messages")
         .select("id", { count: "exact", head: true })
         .in("status", ["new", "open", "pending", "unread", "under_review"]);
 
-      const { count: pendingReports } = await supabase
+      if (lastReadMap.contacts) {
+        contactQuery = contactQuery.gte("created_at", lastReadMap.contacts);
+      }
+
+      const { count: pendingContacts } = await contactQuery;
+
+      let reportQuery = supabase
         .from("listing_reports")
         .select("id", { count: "exact", head: true })
         .in("status", ["new", "open", "pending", "unread", "under_review"]);
 
-      const { count: pendingReviews } = await supabase
+      if (lastReadMap.reports) {
+        reportQuery = reportQuery.gte("created_at", lastReadMap.reports);
+      }
+
+      const { count: pendingReports } = await reportQuery;
+
+      let reviewQuery = supabase
         .from("seller_reviews")
         .select("id", { count: "exact", head: true })
         .eq("status", "pending");
+
+      if (lastReadMap.reviews) {
+        reviewQuery = reviewQuery.gte("created_at", lastReadMap.reviews);
+      }
+
+      const { count: pendingReviews } = await reviewQuery;
 
       setVerificationCount(pendingVerifications || 0);
       setListingCount(pendingListings || 0);
@@ -118,8 +183,37 @@ export default function NotificationBell() {
       setReportCount(pendingReports || 0);
       setReviewCount(pendingReviews || 0);
     } catch (error) {
-      console.error("Notification counts failed:", error);
+      console.error("Admin notification counts failed:", error);
     }
+  }
+
+  async function markAdminNotificationRead(item: AdminNotification) {
+    if (!adminId) return;
+
+    const now = new Date().toISOString();
+
+    await supabase.from("admin_notification_reads").upsert(
+      {
+        admin_id: adminId,
+        notification_key: item.key,
+        last_read_at: now,
+      },
+      {
+        onConflict: "admin_id,notification_key",
+      }
+    );
+
+    if (item.key === "verifications") setVerificationCount(0);
+    if (item.key === "listings") setListingCount(0);
+    if (item.key === "contacts") setContactCount(0);
+    if (item.key === "reports") setReportCount(0);
+    if (item.key === "reviews") setReviewCount(0);
+  }
+
+  async function openNotification(item: AdminNotification) {
+    await markAdminNotificationRead(item);
+    setIsOpen(false);
+    router.push(item.href);
   }
 
   const notifications = useMemo<AdminNotification[]>(
@@ -201,7 +295,7 @@ export default function NotificationBell() {
                 </h2>
 
                 <p className="mt-1 text-xs font-bold text-slate-500">
-                  Pending actions requiring admin review.
+                  Unopened admin updates.
                 </p>
               </div>
 
@@ -213,11 +307,15 @@ export default function NotificationBell() {
 
           <div className="max-h-[420px] overflow-y-auto p-3">
             {notifications.map((item) => (
-              <Link
+              <button
                 key={item.key}
-                href={item.href}
-                onClick={() => setIsOpen(false)}
-                className="block rounded-2xl p-4 transition hover:bg-slate-50"
+                type="button"
+                onClick={() => openNotification(item)}
+                className={
+                  item.count > 0
+                    ? "block w-full rounded-2xl bg-slate-50 p-4 text-left transition hover:bg-emerald-50"
+                    : "block w-full rounded-2xl p-4 text-left transition hover:bg-slate-50"
+                }
               >
                 <div className="flex items-start justify-between gap-3">
                   <div>
@@ -234,18 +332,27 @@ export default function NotificationBell() {
                     {item.count}
                   </span>
                 </div>
-              </Link>
+              </button>
             ))}
           </div>
 
           <div className="border-t border-slate-100 p-3">
-            <Link
-              href="/admin/notifications"
-              onClick={() => setIsOpen(false)}
-              className="block rounded-2xl bg-slate-950 px-4 py-3 text-center text-sm font-black text-white hover:bg-slate-800"
+            <button
+              type="button"
+              onClick={() =>
+                openNotification({
+                  key: "center",
+                  title: "Notification Center",
+                  description: "",
+                  count: 0,
+                  href: "/admin/notifications",
+                  badgeClassName: "",
+                })
+              }
+              className="block w-full rounded-2xl bg-slate-950 px-4 py-3 text-center text-sm font-black text-white hover:bg-slate-800"
             >
               Open Notification Center
-            </Link>
+            </button>
           </div>
         </div>
       )}

@@ -2,6 +2,7 @@
 
 import Header from "@/components/Header";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
@@ -16,6 +17,8 @@ type UserNotification = {
 };
 
 export default function UserNotificationsPage() {
+  const router = useRouter();
+
   const [userId, setUserId] = useState("");
   const [notifications, setNotifications] = useState<UserNotification[]>([]);
   const [message, setMessage] = useState("Loading notifications...");
@@ -62,6 +65,14 @@ export default function UserNotificationsPage() {
       .eq("user_id", userId);
 
     await loadNotifications();
+  }
+
+  async function openNotification(item: UserNotification) {
+    if (!item.is_read) {
+      await markOneAsRead(item.id);
+    }
+
+    router.push(item.href || "/notifications");
   }
 
   async function markAllAsRead() {
@@ -139,14 +150,13 @@ export default function UserNotificationsPage() {
                     </div>
 
                     <div className="flex flex-wrap gap-2">
-                      {item.href && (
-                        <Link
-                          href={item.href}
-                          className="rounded-2xl bg-slate-950 px-5 py-3 text-sm font-black text-white hover:bg-slate-800"
-                        >
-                          Open
-                        </Link>
-                      )}
+                      <button
+                        type="button"
+                        onClick={() => openNotification(item)}
+                        className="rounded-2xl bg-slate-950 px-5 py-3 text-sm font-black text-white hover:bg-slate-800"
+                      >
+                        Open
+                      </button>
 
                       {!item.is_read && (
                         <button

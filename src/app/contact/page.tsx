@@ -1,113 +1,95 @@
 "use client";
 
 import Header from "@/components/Header";
-import { COUNTRY_OPTIONS, DEFAULT_COUNTRY } from "@/lib/countries";
 import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
 export default function ContactPage() {
+  const [userId, setUserId] = useState("");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [country, setCountry] = useState(DEFAULT_COUNTRY);
-  const [messageType, setMessageType] = useState("General enquiry");
+  const [messageType, setMessageType] = useState("Complaint");
   const [subject, setSubject] = useState("");
-  const [message, setMessage] = useState("");
-  const [statusMessage, setStatusMessage] = useState("");
+  const [messageBody, setMessageBody] = useState("");
+  const [pageMessage, setPageMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    const savedCountry = localStorage.getItem("labfinds_country");
-
-    if (savedCountry) {
-      setCountry(savedCountry);
-    }
-
-    async function loadUserEmail() {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      if (user?.email) {
-        setEmail(user.email);
-      }
-    }
-
-    loadUserEmail();
+    loadUser();
   }, []);
+
+  async function loadUser() {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) return;
+
+    setUserId(user.id);
+    setEmail(user.email || "");
+
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("full_name")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    setName(profile?.full_name || "");
+  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     if (!name.trim()) {
-      setStatusMessage("Please write your name.");
+      setPageMessage("Please write your name.");
       return;
     }
 
     if (!email.trim()) {
-      setStatusMessage("Please write your email.");
+      setPageMessage("Please write your email.");
       return;
     }
 
-    if (!message.trim() || message.trim().length < 10) {
-      setStatusMessage(
-        "Please write a clear message with at least 10 characters."
-      );
+    if (!subject.trim()) {
+      setPageMessage("Please write the subject.");
+      return;
+    }
+
+    if (!messageBody.trim()) {
+      setPageMessage("Please write your message.");
       return;
     }
 
     setIsSubmitting(true);
-    setStatusMessage("Sending your message...");
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    setPageMessage("Sending your message...");
 
     const { error } = await supabase.from("contact_messages").insert({
-      user_id: user?.id || null,
+      user_id: userId || null,
       name: name.trim(),
       email: email.trim(),
-      country,
+      subject: subject.trim(),
       message_type: messageType,
-      subject: subject.trim() || null,
-      message: message.trim(),
+      message: messageBody.trim(),
       status: "new",
     });
 
     if (error) {
-      setStatusMessage(error.message);
+      setPageMessage(error.message);
       setIsSubmitting(false);
       return;
     }
 
-    if (user?.id) {
-      await supabase.from("notifications").insert({
-        recipient_id: user.id,
-        recipient_role: null,
-        title: "Your message was submitted",
-        message:
-          "Your message was submitted successfully. Admin will review it as soon as possible.",
-        link_url: "/contact",
-        is_read: false,
-      });
-    }
-
-    await supabase.from("notifications").insert({
-      recipient_id: null,
-      recipient_role: "admin",
-      title: "New contact message",
-      message: `New ${messageType} message received from ${name.trim()}.`,
-      link_url: "/admin/contact-messages",
-      is_read: false,
-    });
-
-    setName("");
     setSubject("");
-    setMessage("");
-    setMessageType("General enquiry");
-    setStatusMessage(
-      "Your message has been sent successfully. Admin will review it as soon as possible."
+    setMessageBody("");
+    setMessageType("Complaint");
+
+    setPageMessage(
+      userId
+        ? "Your message was sent successfully. You will receive a notification when admin replies."
+        : "Your message was sent successfully. Login before sending next time if you want to receive in-app notifications."
     );
+
     setIsSubmitting(false);
   }
 
@@ -120,77 +102,92 @@ export default function ContactPage() {
           ← Back to homepage
         </Link>
 
-        <div className="rounded-3xl bg-white p-8 shadow-sm">
+        <section className="rounded-3xl bg-white p-8 shadow-sm">
           <p className="mb-4 inline-block rounded-full bg-emerald-50 px-4 py-2 text-sm font-black text-emerald-700">
-            Contact LabFinds
+            Contact LabFinds Admin
           </p>
 
-          <h1 className="text-4xl font-black">Contact Us</h1>
+          <h1 className="text-4xl font-black">Send a Request</h1>
 
           <p className="mt-3 max-w-2xl leading-7 text-slate-600">
-            Send us any enquiry, complaint, safety concern, seller issue, buyer
-            issue, country availability request, or technical problem. Your
-            message will appear privately to the admin.
+            Use this form for complaints, misleading product reports, help
+            requests, seller issues, buyer issues, or general enquiries.
           </p>
+
+          {userId ? (
+            <div className="mt-6 rounded-3xl border border-emerald-200 bg-emerald-50 p-5 text-emerald-900">
+              <h2 className="font-black">You are logged in</h2>
+
+              <p className="mt-2 text-sm leading-6">
+                Admin replies will appear in your notifications and in My
+                Requests.
+              </p>
+
+              <Link
+                href="/my-requests"
+                className="mt-4 inline-block font-black text-emerald-700 underline"
+              >
+                Open My Requests
+              </Link>
+            </div>
+          ) : (
+            <div className="mt-6 rounded-3xl border border-amber-200 bg-amber-50 p-5 text-amber-900">
+              <h2 className="font-black">Login recommended</h2>
+
+              <p className="mt-2 text-sm leading-6">
+                You can send anonymously, but you will not receive in-app
+                notifications unless you login first.
+              </p>
+
+              <Link
+                href="/login"
+                className="mt-4 inline-block font-black text-amber-700 underline"
+              >
+                Login first
+              </Link>
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className="mt-8 grid gap-6">
             <div className="grid gap-5 md:grid-cols-2">
               <InputField
-                label="Your Name *"
+                label="Name *"
                 value={name}
                 onChange={setName}
-                placeholder="Your full name"
+                placeholder="Your name"
               />
 
               <InputField
                 label="Email *"
                 value={email}
                 onChange={setEmail}
-                placeholder="email@example.com"
+                placeholder="your@email.com"
                 type="email"
               />
             </div>
 
-            <div className="grid gap-5 md:grid-cols-2">
-              <div>
-                <label className="mb-2 block font-bold">Country</label>
+            <div>
+              <label className="mb-2 block font-bold">Request Type *</label>
 
-                <select
-                  value={country}
-                  onChange={(event) => setCountry(event.target.value)}
-                  className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-emerald-700"
-                >
-                  {COUNTRY_OPTIONS.map((item) => (
-                    <option key={item}>{item}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="mb-2 block font-bold">Message Type *</label>
-
-                <select
-                  value={messageType}
-                  onChange={(event) => setMessageType(event.target.value)}
-                  className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-emerald-700"
-                >
-                  <option>General enquiry</option>
-                  <option>Buyer complaint</option>
-                  <option>Seller complaint</option>
-                  <option>Fraud or safety concern</option>
-                  <option>Wrong country listing</option>
-                  <option>Technical problem</option>
-                  <option>Partnership request</option>
-                  <option>Other</option>
-                </select>
-              </div>
+              <select
+                value={messageType}
+                onChange={(event) => setMessageType(event.target.value)}
+                className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-emerald-700"
+              >
+                <option>Complaint</option>
+                <option>Misleading product report</option>
+                <option>Help request</option>
+                <option>Buyer issue</option>
+                <option>Seller issue</option>
+                <option>General enquiry</option>
+              </select>
             </div>
 
             <InputField
-              label="Subject"
+              label="Subject *"
               value={subject}
               onChange={setSubject}
-              placeholder="Example: Complaint about a listing"
+              placeholder="Example: Misleading product information"
             />
 
             <div>
@@ -198,9 +195,9 @@ export default function ContactPage() {
 
               <textarea
                 rows={7}
-                placeholder="Write your enquiry or complaint clearly..."
-                value={message}
-                onChange={(event) => setMessage(event.target.value)}
+                value={messageBody}
+                onChange={(event) => setMessageBody(event.target.value)}
+                placeholder="Write your complaint, request, or report clearly."
                 className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-emerald-700"
               />
             </div>
@@ -210,16 +207,16 @@ export default function ContactPage() {
               disabled={isSubmitting}
               className="rounded-2xl bg-emerald-700 px-6 py-4 font-black text-white hover:bg-emerald-800 disabled:cursor-not-allowed disabled:bg-slate-400"
             >
-              {isSubmitting ? "Sending..." : "Send Message to Admin"}
+              {isSubmitting ? "Sending..." : "Send Message"}
             </button>
           </form>
 
-          {statusMessage && (
+          {pageMessage && (
             <p className="mt-6 rounded-2xl bg-slate-100 p-4 font-bold text-slate-700">
-              {statusMessage}
+              {pageMessage}
             </p>
           )}
-        </div>
+        </section>
       </div>
     </main>
   );
@@ -244,9 +241,9 @@ function InputField({
 
       <input
         type={type}
-        placeholder={placeholder}
         value={value}
         onChange={(event) => onChange(event.target.value)}
+        placeholder={placeholder}
         className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-emerald-700"
       />
     </div>

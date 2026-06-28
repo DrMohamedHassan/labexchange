@@ -19,7 +19,6 @@ type ContactMessage = {
   handled_by: string | null;
   handled_at: string | null;
   created_at: string | null;
-  [key: string]: unknown;
 };
 
 const statusOptions = [
@@ -85,7 +84,9 @@ export default function AdminContactMessagesPage() {
 
       const { data, error } = await supabase
         .from("contact_messages")
-        .select("*")
+        .select(
+          "id, user_id, name, email, subject, message, message_type, status, admin_reply, admin_note, handled_by, handled_at, created_at"
+        )
         .order("created_at", { ascending: false });
 
       if (error) {
@@ -115,18 +116,35 @@ export default function AdminContactMessagesPage() {
     setSelectedStatus(message.status || "new");
   }
 
+  function getReplyPreview(reply: string) {
+    const cleanReply = reply.trim();
+
+    if (!cleanReply) {
+      return "Admin updated your contact request.";
+    }
+
+    if (cleanReply.length <= 120) {
+      return cleanReply;
+    }
+
+    return `${cleanReply.slice(0, 120)}...`;
+  }
+
   async function updateMessageStatus(newStatus: string) {
     if (!selectedMessage) return;
 
     setIsSaving(true);
-    setPageMessage("Updating message...");
+    setPageMessage("Saving admin reply and status...");
+
+    const cleanReply = adminReply.trim();
+    const cleanNote = adminNote.trim();
 
     const { error } = await supabase
       .from("contact_messages")
       .update({
         status: newStatus,
-        admin_reply: adminReply.trim() || null,
-        admin_note: adminNote.trim() || null,
+        admin_reply: cleanReply || null,
+        admin_note: cleanNote || null,
         handled_by: adminId || null,
         handled_at: new Date().toISOString(),
       })
@@ -141,27 +159,38 @@ export default function AdminContactMessagesPage() {
     if (selectedMessage.user_id) {
       await supabase.rpc("create_user_notification", {
         target_user_id: selectedMessage.user_id,
-        notification_type: "contact_status",
-        notification_title: "Contact request updated",
-        notification_message: `Your contact message status is now ${newStatus}.`,
-        notification_href: "/notifications",
+        notification_type: "admin_contact_reply",
+        notification_title: cleanReply
+          ? "Admin replied to your request"
+          : "Your request status was updated",
+        notification_message: cleanReply
+          ? `Admin reply: ${getReplyPreview(cleanReply)}`
+          : `Your contact request status is now ${newStatus}.`,
+        notification_href: `/my-requests/${selectedMessage.id}`,
         notification_metadata: {
           contact_message_id: selectedMessage.id,
           status: newStatus,
+          has_admin_reply: Boolean(cleanReply),
         },
       });
     }
 
-    setPageMessage("Message updated successfully.");
-    setIsSaving(false);
+    setPageMessage(
+      selectedMessage.user_id
+        ? "Saved successfully. The user received a notification."
+        : "Saved successfully. This message was anonymous, so no in-app notification was sent."
+    );
 
+    setIsSaving(false);
     await reloadAfterUpdate(selectedMessage.id);
   }
 
   async function reloadAfterUpdate(messageId: number) {
     const { data } = await supabase
       .from("contact_messages")
-      .select("*")
+      .select(
+        "id, user_id, name, email, subject, message, message_type, status, admin_reply, admin_note, handled_by, handled_at, created_at"
+      )
       .order("created_at", { ascending: false });
 
     const updatedMessages = (data || []) as ContactMessage[];
@@ -192,7 +221,10 @@ export default function AdminContactMessagesPage() {
       <Header />
 
       <div className="mx-auto max-w-7xl px-6 py-10">
-        <Link href="/admin" className="mb-6 inline-block font-bold text-emerald-700">
+        <Link
+          href="/admin"
+          className="mb-6 inline-block font-bold text-emerald-700"
+        >
           ← Back to admin dashboard
         </Link>
 
@@ -207,8 +239,8 @@ export default function AdminContactMessagesPage() {
 
               <p className="mt-3 max-w-3xl leading-7 text-slate-600">
                 Read complaints, enquiries, misleading reports, and user help
-                requests. You can mark the message as under review, resolved,
-                rejected, or closed.
+                requests. When you save an admin reply, the logged-in user gets
+                a notification and can open your reply.
               </p>
             </div>
 
@@ -275,6 +307,12 @@ export default function AdminContactMessagesPage() {
                               {item.message || "No message body."}
                             </p>
 
+                            {item.admin_reply && (
+                              <p className="mt-3 rounded-xl bg-indigo-50 p-3 text-xs font-bold text-indigo-700">
+                                Admin replied
+                              </p>
+                            )}
+
                             <p className="mt-3 text-xs font-bold text-slate-400">
                               {item.created_at
                                 ? new Date(item.created_at).toLocaleString()
@@ -307,9 +345,7 @@ export default function AdminContactMessagesPage() {
                           </p>
                         </div>
 
-                        <StatusBadge
-                          status={selectedMessage.status || "new"}
-                        />
+                        <StatusBadge status={selectedMessage.status || "new"} />
                       </div>
 
                       <div className="mt-6 grid gap-4 rounded-3xl bg-slate-50 p-5 md:grid-cols-2">
@@ -333,6 +369,15 @@ export default function AdminContactMessagesPage() {
                         />
 
                         <InfoItem
+                          label="User notification"
+                          value={
+                            selectedMessage.user_id
+                              ? "Available — user will receive notification"
+                              : "Anonymous — no in-app notification"
+                          }
+                        />
+
+                        <InfoItem
                           label="Created"
                           value={
                             selectedMessage.created_at
@@ -341,11 +386,6 @@ export default function AdminContactMessagesPage() {
                                 ).toLocaleString()
                               : "Not available"
                           }
-                        />
-
-                        <InfoItem
-                          label="User ID"
-                          value={selectedMessage.user_id || "Anonymous / not logged in"}
                         />
 
                         <InfoItem
@@ -374,10 +414,8 @@ export default function AdminContactMessagesPage() {
                         </h3>
 
                         <p className="mt-2 text-sm leading-6 text-indigo-900">
-                          This reply is saved inside the admin panel. If the user
-                          was logged in when sending the complaint, they will
-                          receive an in-app notification after you update the
-                          status.
+                          The user will see this reply when they open the
+                          notification or visit My Requests.
                         </p>
 
                         <textarea
@@ -395,7 +433,8 @@ export default function AdminContactMessagesPage() {
                         </h3>
 
                         <p className="mt-2 text-sm leading-6 text-amber-900">
-                          Private note for admin team only.
+                          Private note for admin team only. The user will not
+                          see this note.
                         </p>
 
                         <textarea
@@ -455,9 +494,7 @@ export default function AdminContactMessagesPage() {
                     </>
                   ) : (
                     <div className="rounded-3xl bg-slate-50 p-8">
-                      <h2 className="text-2xl font-black">
-                        Select a message
-                      </h2>
+                      <h2 className="text-2xl font-black">Select a message</h2>
 
                       <p className="mt-3 text-slate-600">
                         Choose a contact message from the inbox to read and

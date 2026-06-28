@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
@@ -15,6 +15,8 @@ type UserNotification = {
 };
 
 export default function UserNotificationBell() {
+  const router = useRouter();
+
   const [userId, setUserId] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -23,6 +25,7 @@ export default function UserNotificationBell() {
 
   useEffect(() => {
     let mounted = true;
+    let loadedUserId = "";
 
     async function loadUserAndNotifications() {
       try {
@@ -34,12 +37,15 @@ export default function UserNotificationBell() {
 
         if (!user) {
           if (!mounted) return;
+
           setUserId("");
           setUnreadCount(0);
           setNotifications([]);
           setIsLoading(false);
           return;
         }
+
+        loadedUserId = user.id;
 
         if (!mounted) return;
 
@@ -60,8 +66,8 @@ export default function UserNotificationBell() {
     loadUserAndNotifications();
 
     const interval = window.setInterval(() => {
-      if (userId) {
-        loadNotifications(userId);
+      if (loadedUserId) {
+        loadNotifications(loadedUserId);
       }
     }, 30000);
 
@@ -69,7 +75,7 @@ export default function UserNotificationBell() {
       mounted = false;
       window.clearInterval(interval);
     };
-  }, [userId]);
+  }, []);
 
   async function loadNotifications(currentUserId: string) {
     const { data } = await supabase
@@ -87,6 +93,36 @@ export default function UserNotificationBell() {
 
     setNotifications((data || []) as UserNotification[]);
     setUnreadCount(count || 0);
+  }
+
+  async function markNotificationAsRead(notificationId: number) {
+    if (!userId) return;
+
+    await supabase
+      .from("user_notifications")
+      .update({
+        is_read: true,
+        read_at: new Date().toISOString(),
+      })
+      .eq("id", notificationId)
+      .eq("user_id", userId);
+
+    setNotifications((current) =>
+      current.map((item) =>
+        item.id === notificationId ? { ...item, is_read: true } : item
+      )
+    );
+
+    setUnreadCount((current) => Math.max(current - 1, 0));
+  }
+
+  async function openNotification(item: UserNotification) {
+    if (!item.is_read) {
+      await markNotificationAsRead(item.id);
+    }
+
+    setIsOpen(false);
+    router.push(item.href || "/notifications");
   }
 
   async function markAllAsRead() {
@@ -135,7 +171,7 @@ export default function UserNotificationBell() {
                 </h2>
 
                 <p className="mt-1 text-xs font-bold text-slate-500">
-                  Updates related to your account and requests.
+                  Unread updates related to your account.
                 </p>
               </div>
 
@@ -158,14 +194,14 @@ export default function UserNotificationBell() {
           <div className="max-h-[420px] overflow-y-auto p-3">
             {notifications.length > 0 ? (
               notifications.map((item) => (
-                <Link
+                <button
                   key={item.id}
-                  href={item.href || "/notifications"}
-                  onClick={() => setIsOpen(false)}
+                  type="button"
+                  onClick={() => openNotification(item)}
                   className={
                     item.is_read
-                      ? "block rounded-2xl p-4 transition hover:bg-slate-50"
-                      : "block rounded-2xl bg-emerald-50 p-4 transition hover:bg-emerald-100"
+                      ? "block w-full rounded-2xl p-4 text-left transition hover:bg-slate-50"
+                      : "block w-full rounded-2xl bg-emerald-50 p-4 text-left transition hover:bg-emerald-100"
                   }
                 >
                   <p className="font-black text-slate-950">{item.title}</p>
@@ -177,7 +213,7 @@ export default function UserNotificationBell() {
                   <p className="mt-2 text-[11px] font-bold text-slate-400">
                     {new Date(item.created_at).toLocaleString()}
                   </p>
-                </Link>
+                </button>
               ))
             ) : (
               <p className="rounded-2xl bg-slate-50 p-4 text-sm font-bold text-slate-600">
@@ -187,13 +223,16 @@ export default function UserNotificationBell() {
           </div>
 
           <div className="border-t border-slate-100 p-3">
-            <Link
-              href="/notifications"
-              onClick={() => setIsOpen(false)}
-              className="block rounded-2xl bg-slate-950 px-4 py-3 text-center text-sm font-black text-white hover:bg-slate-800"
+            <button
+              type="button"
+              onClick={() => {
+                setIsOpen(false);
+                router.push("/notifications");
+              }}
+              className="block w-full rounded-2xl bg-slate-950 px-4 py-3 text-center text-sm font-black text-white hover:bg-slate-800"
             >
               Open All Notifications
-            </Link>
+            </button>
           </div>
         </div>
       )}

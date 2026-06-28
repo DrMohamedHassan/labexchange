@@ -27,80 +27,28 @@ export type HomepageListing = {
 
 const categories = [
   {
-    name: "PCR Reagents",
-    image: "/images/category-pcr.png",
-    description: "PCR mixes, enzymes, buffers, tubes, and related reagents.",
-  },
-  {
-    name: "qPCR Reagents",
-    image: "/images/category-reagents.PNG",
-    description: "qPCR master mixes, probes, dyes, controls, and kits.",
-  },
-  {
-    name: "Primers & Probes",
-    image: "/images/category-primers.png",
-    description: "Primers, probes, oligos, and molecular detection materials.",
-  },
-  {
-    name: "DNA/RNA Extraction",
-    image: "/images/category-extraction.png",
-    description: "Extraction kits, columns, buffers, and purification supplies.",
-  },
-  {
-    name: "Electrophoresis Consumables",
-    image: "/images/category-electrophoresis.PNG",
-    description: "Gels, ladders, buffers, loading dyes, and gel accessories.",
-  },
-  {
-    name: "Cloning & Transformation",
-    image: "/images/category-cloning.PNG",
+    name: "Molecular Biology",
+    image: "/images/category-molecular.png",
     description:
-      "Cloning kits, competent cells, vectors, and transformation items.",
+      "PCR, qPCR, extraction, primers, probes, cloning, sequencing, and molecular biology supplies.",
   },
   {
-    name: "Sequencing & NGS",
-    image: "/images/category-sequencing.PNG",
-    description: "Sequencing kits, NGS library materials, and related supplies.",
-  },
-  {
-    name: "Cell Culture & Tissue Engineering",
-    image: "/images/category-cell-culture.png",
+    name: "Chemicals & Reagents",
+    image: "/images/category-chemicals.png",
     description:
-      "Culture plates, media, flasks, supplements, and cell culture tools.",
+      "Research reagents, buffers, standards, controls, and chemical-related lab products.",
   },
   {
-    name: "Immunology & Protein Analysis",
-    image: "/images/category-immunology.PNG",
+    name: "Cell Culture & Cell Lines",
+    image: "/images/category-cell-lines.png",
     description:
-      "Antibodies, ELISA materials, protein assays, and immunology tools.",
+      "Cell culture media, supplements, flasks, plates, cell lines, and tissue culture supplies.",
   },
   {
-    name: "Plasticware",
-    image: "/images/category-plasticware.png",
-    description: "Tubes, tips, plates, bottles, and general lab plasticware.",
-  },
-  {
-    name: "Standards & Controls",
-    image: "/images/category-reagents.PNG",
+    name: "Lab Supplies & Equipment",
+    image: "/images/category-equipment.png",
     description:
-      "Reference standards, controls, calibrators, and quality materials.",
-  },
-  {
-    name: "Agricultural Biotechnology",
-    image: "/images/category-agriculture.PNG",
-    description:
-      "Plant biotech, crop testing, agricultural molecular biology supplies.",
-  },
-  {
-    name: "Equipment",
-    image: "/images/category-equipment.PNG",
-    description:
-      "Reviewed lab devices, small equipment, and verified used instruments.",
-  },
-  {
-    name: "Others",
-    image: "/images/product-placeholder.png",
-    description: "Other approved laboratory and research supplies.",
+      "Plasticware, consumables, glassware, small lab equipment, and reviewed used instruments.",
   },
 ];
 
@@ -141,14 +89,15 @@ export default function HomepageMarketplace({
             <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
               <div>
                 <p className="mb-2 text-sm font-black uppercase tracking-wide text-emerald-700">
-                  Search marketplace
+                  Smart search
                 </p>
 
                 <h2 className="text-3xl font-black">Search LabFinds</h2>
 
                 <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
                   Search by product name, category, city, country, brand, or
-                  keyword.
+                  keyword. Search is case-insensitive and tries to find close
+                  matches even with small spelling mistakes.
                 </p>
               </div>
 
@@ -161,7 +110,7 @@ export default function HomepageMarketplace({
                   <input
                     name="q"
                     type="search"
-                    placeholder="Search qPCR, PCR, extraction, equipment, Cairo..."
+                    placeholder="Search PCR, qPCR, cell culture, reagents, equipment..."
                     className="w-full rounded-2xl border border-slate-300 bg-white px-5 py-4 font-semibold outline-none transition focus:border-emerald-700 focus:ring-4 focus:ring-emerald-50"
                   />
 
@@ -196,7 +145,7 @@ export default function HomepageMarketplace({
           </Link>
         </div>
 
-        <div className="grid gap-5 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+        <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
           {categories.map((category) => (
             <button
               key={category.name}
@@ -204,8 +153,8 @@ export default function HomepageMarketplace({
               onClick={() => openCategory(category.name)}
               className="group overflow-hidden rounded-3xl border border-slate-200 bg-white text-left shadow-sm transition hover:-translate-y-1 hover:border-emerald-300 hover:shadow-xl"
             >
-              <div className="flex h-40 items-center justify-center bg-gradient-to-br from-emerald-50 to-slate-50 p-6">
-                <div className="relative h-28 w-28 transition duration-300 group-hover:scale-110">
+              <div className="flex h-44 items-center justify-center bg-gradient-to-br from-emerald-50 to-slate-50 p-6">
+                <div className="relative h-32 w-32 transition duration-300 group-hover:scale-110">
                   <Image
                     src={category.image}
                     alt={`${category.name} category icon`}
