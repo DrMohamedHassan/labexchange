@@ -28,25 +28,25 @@ export type HomepageListing = {
 const categories = [
   {
     name: "Molecular Biology",
-    image: "/images/category-molecular.png",
+    image: "/images/category-molecular.PNG",
     description:
       "PCR, qPCR, extraction, primers, probes, cloning, sequencing, and molecular biology supplies.",
   },
   {
     name: "Chemicals & Reagents",
-    image: "/images/category-chemicals.png",
+    image: "/images/category-chemicals.PNG",
     description:
       "Research reagents, buffers, standards, controls, and chemical-related lab products.",
   },
   {
     name: "Cell Culture & Cell Lines",
-    image: "/images/category-cell-lines.png",
+    image: "/images/category-cell-lines.PNG",
     description:
       "Cell culture media, supplements, flasks, plates, cell lines, and tissue culture supplies.",
   },
   {
     name: "Lab Supplies & Equipment",
-    image: "/images/category-equipment.png",
+    image: "/images/category-lab-supplies.PNG",
     description:
       "Plasticware, consumables, glassware, small lab equipment, and reviewed used instruments.",
   },
