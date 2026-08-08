@@ -1,7 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import {
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import ListingCard from "@/components/ListingCard";
 
 export type SearchListing = {
@@ -26,24 +30,42 @@ export type SearchListing = {
 export default function SearchResultsCountryView({
   query,
   listings,
+  exactCategoryName = "",
+  exactCategoryValues = [],
   errorMessage,
 }: {
   query: string;
   listings: SearchListing[];
+  exactCategoryName?: string;
+  exactCategoryValues?: string[];
   errorMessage?: string | null;
 }) {
-  const [selectedCountry, setSelectedCountry] = useState("");
+  const [
+    selectedCountry,
+    setSelectedCountry,
+  ] = useState("");
 
   useEffect(() => {
     function syncSelectedCountry() {
-      const savedCountry = localStorage.getItem("labfinds_country") || "";
+      const savedCountry =
+        localStorage.getItem(
+          "labfinds_country"
+        ) || "";
+
+      const normalized =
+        savedCountry
+          .trim()
+          .toLowerCase();
 
       if (
         savedCountry &&
-        savedCountry.toLowerCase() !== "all countries" &&
-        savedCountry.toLowerCase() !== "all"
+        normalized !==
+          "all countries" &&
+        normalized !== "all"
       ) {
-        setSelectedCountry(savedCountry);
+        setSelectedCountry(
+          savedCountry
+        );
       } else {
         setSelectedCountry("");
       }
@@ -51,53 +73,206 @@ export default function SearchResultsCountryView({
 
     syncSelectedCountry();
 
-    window.addEventListener("storage", syncSelectedCountry);
-    window.addEventListener("focus", syncSelectedCountry);
+    window.addEventListener(
+      "storage",
+      syncSelectedCountry
+    );
 
-    const interval = window.setInterval(syncSelectedCountry, 1000);
+    window.addEventListener(
+      "focus",
+      syncSelectedCountry
+    );
+
+    const interval =
+      window.setInterval(
+        syncSelectedCountry,
+        1000
+      );
 
     return () => {
-      window.removeEventListener("storage", syncSelectedCountry);
-      window.removeEventListener("focus", syncSelectedCountry);
+      window.removeEventListener(
+        "storage",
+        syncSelectedCountry
+      );
+
+      window.removeEventListener(
+        "focus",
+        syncSelectedCountry
+      );
+
       window.clearInterval(interval);
     };
   }, []);
 
   function changeCountry() {
-    localStorage.removeItem("labfinds_country");
+    localStorage.removeItem(
+      "labfinds_country"
+    );
+
     setSelectedCountry("");
+
     window.location.reload();
   }
 
-  const countryListings = useMemo(() => {
-    if (!selectedCountry) {
-      return listings;
-    }
-
-    return listings.filter((listing) =>
-      isSameCountry(listing.country, selectedCountry)
-    );
-  }, [listings, selectedCountry]);
+  const isExactCategoryMode =
+    exactCategoryValues.length > 0;
 
   const results = useMemo(() => {
-    if (!query) {
-      return countryListings;
+    let filtered = listings;
+
+    /*
+     * COUNTRY FILTER
+     */
+    if (selectedCountry) {
+      filtered = filtered.filter(
+        (listing) =>
+          normalize(
+            listing.country
+          ) ===
+          normalize(
+            selectedCountry
+          )
+      );
     }
 
-    return rankListingsBySmartSearch(countryListings, query);
-  }, [countryListings, query]);
+    /*
+     * EXACT CATEGORY FILTER
+     *
+     * Smart search is completely
+     * disabled here.
+     */
+    if (isExactCategoryMode) {
+      return filtered.filter(
+        (listing) =>
+          exactCategoryValues.some(
+            (allowedCategory) =>
+              normalize(
+                listing.category
+              ) ===
+              normalize(
+                allowedCategory
+              )
+          )
+      );
+    }
+
+    /*
+     * ORDINARY SMART SEARCH ONLY
+     */
+    const normalizedQuery =
+      normalizeSearch(query);
+
+    if (!normalizedQuery) {
+      return filtered;
+    }
+
+    const queryWords =
+      normalizedQuery
+        .split(" ")
+        .filter(
+          (word) =>
+            word.length > 1
+        );
+
+    return filtered
+      .map((listing) => {
+        const title =
+          normalizeSearch(
+            listing.title
+          );
+
+        const searchableText =
+          normalizeSearch(
+            [
+              listing.title,
+              listing.category,
+              listing.condition,
+              listing.country,
+              listing.city,
+              listing.description,
+              listing.brand,
+            ]
+              .filter(Boolean)
+              .join(" ")
+          );
+
+        let score = 0;
+
+        if (
+          title ===
+          normalizedQuery
+        ) {
+          score += 100;
+        }
+
+        if (
+          title.includes(
+            normalizedQuery
+          )
+        ) {
+          score += 60;
+        }
+
+        if (
+          searchableText.includes(
+            normalizedQuery
+          )
+        ) {
+          score += 40;
+        }
+
+        for (
+          const word
+          of queryWords
+        ) {
+          if (
+            searchableText.includes(
+              word
+            )
+          ) {
+            score += 10;
+          }
+        }
+
+        return {
+          listing,
+          score,
+        };
+      })
+      .filter(
+        (item) =>
+          item.score > 0
+      )
+      .sort(
+        (a, b) =>
+          b.score - a.score
+      )
+      .map(
+        (item) =>
+          item.listing
+      );
+  }, [
+    listings,
+    selectedCountry,
+    query,
+    isExactCategoryMode,
+    exactCategoryValues,
+  ]);
 
   return (
     <section className="mx-auto max-w-7xl px-6 py-10">
       {selectedCountry && (
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-3xl bg-emerald-50 p-5">
           <p className="font-black text-emerald-800">
-            Showing search results in: {selectedCountry}
+            Showing results in:{" "}
+            {selectedCountry}
           </p>
 
           <button
             type="button"
-            onClick={changeCountry}
+            onClick={
+              changeCountry
+            }
             className="rounded-2xl bg-white px-5 py-3 font-black text-emerald-700 shadow-sm hover:bg-emerald-100"
           >
             Change country
@@ -106,59 +281,126 @@ export default function SearchResultsCountryView({
       )}
 
       {errorMessage ? (
-        <div className="rounded-3xl bg-red-50 p-6 font-bold text-red-700">
-          Database error: {errorMessage}
+        <div className="rounded-3xl border border-red-200 bg-red-50 p-6 font-bold text-red-700">
+          Database error:{" "}
+          {errorMessage}
         </div>
-      ) : results.length > 0 ? (
+      ) : results.length >
+        0 ? (
         <>
           <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
             <div>
-              <h2 className="text-2xl font-black">Matching products</h2>
+              <h2 className="text-2xl font-black">
+                {isExactCategoryMode
+                  ? exactCategoryName
+                  : "Matching products"}
+              </h2>
 
               <p className="mt-2 text-sm text-slate-600">
-                Found {results.length} related product
-                {results.length === 1 ? "" : "s"}
-                {selectedCountry ? ` in ${selectedCountry}` : ""}.
+                Found{" "}
+                {
+                  results.length
+                }{" "}
+                product
+                {results.length ===
+                1
+                  ? ""
+                  : "s"}
+                {selectedCountry
+                  ? ` in ${selectedCountry}`
+                  : ""}
+                .
               </p>
+
+              {isExactCategoryMode && (
+                <p className="mt-2 text-sm font-bold text-emerald-700">
+                  Exact category
+                  filtering is active.
+                  Products from other
+                  categories are
+                  excluded.
+                </p>
+              )}
             </div>
 
             <Link
               href="/listings"
               className="rounded-2xl bg-slate-950 px-6 py-3 font-black text-white hover:bg-slate-800"
             >
-              View buy items
+              View all buy items
             </Link>
           </div>
 
           <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
-            {results.map((listing) => (
-              <ListingCard
-                key={listing.id}
-                id={listing.id}
-                sellerId={listing.seller_id}
-                sellerPhone={listing.seller_phone}
-                title={listing.title || "Untitled item"}
-                category={`${listing.category || "General"} · ${
-                  listing.country || "Country not set"
-                }`}
-                condition={listing.condition || "Condition not provided"}
-                city={listing.city || "City not provided"}
-                price={listing.price}
-                priceCurrency={listing.price_currency}
-                imageUrl={listing.product_image_url || listing.image_url}
-                status={listing.status || "approved"}
-              />
-            ))}
+            {results.map(
+              (listing) => (
+                <ListingCard
+                  key={
+                    listing.id
+                  }
+                  id={
+                    listing.id
+                  }
+                  sellerId={
+                    listing.seller_id
+                  }
+                  sellerPhone={
+                    listing.seller_phone
+                  }
+                  title={
+                    listing.title ||
+                    "Untitled item"
+                  }
+                  category={`${
+                    listing.category ||
+                    "General"
+                  } · ${
+                    listing.country ||
+                    "Country not set"
+                  }`}
+                  condition={
+                    listing.condition ||
+                    "Condition not provided"
+                  }
+                  city={
+                    listing.city ||
+                    "City not provided"
+                  }
+                  price={
+                    listing.price
+                  }
+                  priceCurrency={
+                    listing.price_currency
+                  }
+                  imageUrl={
+                    listing.product_image_url ||
+                    listing.image_url
+                  }
+                  status={
+                    listing.status ||
+                    "approved"
+                  }
+                />
+              )
+            )}
           </div>
         </>
       ) : (
-        <div className="rounded-3xl bg-white p-8 shadow-sm">
-          <h2 className="text-3xl font-black">No related products found</h2>
+        <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
+          <h2 className="text-3xl font-black">
+            {isExactCategoryMode
+              ? `No ${exactCategoryName} listings have been published yet.`
+              : "No related products found"}
+          </h2>
 
           <p className="mt-3 max-w-2xl leading-7 text-slate-600">
-            {selectedCountry
-              ? `No related products were found in ${selectedCountry}. Try another keyword or change country.`
-              : "Try another keyword, category, city, country, brand, or shorter search word."}
+            {isExactCategoryMode
+              ? selectedCountry
+                ? `There are currently no approved ${exactCategoryName} products in ${selectedCountry}.`
+                : `There are currently no approved products published in the ${exactCategoryName} category.`
+              : selectedCountry
+                ? `No products related to “${query}” were found in ${selectedCountry}.`
+                : `No products related to “${query}” were found.`}
           </p>
 
           <div className="mt-6 flex flex-wrap gap-3">
@@ -166,14 +408,14 @@ export default function SearchResultsCountryView({
               href="/listings"
               className="rounded-2xl bg-emerald-700 px-6 py-3 font-black text-white hover:bg-emerald-800"
             >
-              Browse items
+              Browse all items
             </Link>
 
             <Link
-              href="/"
-              className="rounded-2xl border border-slate-200 bg-white px-6 py-3 font-black text-slate-800 hover:border-emerald-600"
+              href="/#categories"
+              className="rounded-2xl border border-emerald-200 bg-emerald-50 px-6 py-3 font-black text-emerald-700 hover:bg-emerald-100"
             >
-              Back home
+              Shop by Category
             </Link>
           </div>
         </div>
@@ -182,165 +424,44 @@ export default function SearchResultsCountryView({
   );
 }
 
-function normalizeCountry(value: string | null | undefined) {
-  return String(value || "")
+function normalize(
+  value:
+    | string
+    | null
+    | undefined
+) {
+  return String(
+    value || ""
+  )
     .trim()
-    .toLowerCase();
-}
-
-function isSameCountry(
-  listingCountry: string | null | undefined,
-  selectedCountry: string
-) {
-  return normalizeCountry(listingCountry) === normalizeCountry(selectedCountry);
-}
-
-function rankListingsBySmartSearch(
-  listings: SearchListing[],
-  rawQuery: string
-): SearchListing[] {
-  const query = normalizeText(rawQuery);
-
-  if (!query) return listings;
-
-  const queryWords = getWords(query);
-
-  const ranked = listings
-    .map((listing) => {
-      const searchableText = normalizeText(
-        [
-          listing.title,
-          listing.category,
-          listing.condition,
-          listing.country,
-          listing.city,
-          listing.description,
-          listing.brand,
-        ]
-          .filter(Boolean)
-          .join(" ")
-      );
-
-      const searchableWords = getWords(searchableText);
-
-      const score = getSearchScore(
-        query,
-        queryWords,
-        searchableText,
-        searchableWords
-      );
-
-      return {
-        listing,
-        score,
-      };
-    })
-    .filter((item) => item.score > 0)
-    .sort((a, b) => b.score - a.score);
-
-  return ranked.map((item) => item.listing);
-}
-
-function normalizeText(value: string) {
-  return value
     .toLowerCase()
-    .replace(/&/g, " and ")
-    .replace(/[^a-z0-9\u0600-\u06ff]+/gi, " ")
-    .replace(/\s+/g, " ")
-    .trim();
+    .replace(
+      /\s+/g,
+      " "
+    );
 }
 
-function getWords(value: string) {
-  return value
-    .split(" ")
-    .map((word) => word.trim())
-    .filter((word) => word.length > 0);
-}
-
-function getSearchScore(
-  query: string,
-  queryWords: string[],
-  searchableText: string,
-  searchableWords: string[]
+function normalizeSearch(
+  value:
+    | string
+    | null
+    | undefined
 ) {
-  let score = 0;
-
-  if (searchableText === query) {
-    score += 100;
-  }
-
-  if (searchableText.includes(query)) {
-    score += 80;
-  }
-
-  for (const queryWord of queryWords) {
-    if (queryWord.length <= 1) continue;
-
-    for (const searchableWord of searchableWords) {
-      if (searchableWord.includes(queryWord)) {
-        score += 18;
-        continue;
-      }
-
-      if (queryWord.includes(searchableWord) && searchableWord.length >= 4) {
-        score += 10;
-        continue;
-      }
-
-      const similarity = getSimilarity(queryWord, searchableWord);
-
-      if (similarity >= 0.78) {
-        score += 14;
-      } else if (similarity >= 0.68 && queryWord.length >= 5) {
-        score += 8;
-      }
-    }
-  }
-
-  const compactQuery = query.replace(/\s+/g, "");
-  const compactText = searchableText.replace(/\s+/g, "");
-
-  if (compactQuery.length >= 4 && compactText.includes(compactQuery)) {
-    score += 25;
-  }
-
-  return score;
-}
-
-function getSimilarity(first: string, second: string) {
-  if (!first || !second) return 0;
-  if (first === second) return 1;
-
-  const distance = levenshteinDistance(first, second);
-  const maxLength = Math.max(first.length, second.length);
-
-  return 1 - distance / maxLength;
-}
-
-function levenshteinDistance(first: string, second: string) {
-  const matrix: number[][] = [];
-
-  for (let i = 0; i <= second.length; i += 1) {
-    matrix[i] = [i];
-  }
-
-  for (let j = 0; j <= first.length; j += 1) {
-    matrix[0][j] = j;
-  }
-
-  for (let i = 1; i <= second.length; i += 1) {
-    for (let j = 1; j <= first.length; j += 1) {
-      if (second.charAt(i - 1) === first.charAt(j - 1)) {
-        matrix[i][j] = matrix[i - 1][j - 1];
-      } else {
-        matrix[i][j] = Math.min(
-          matrix[i - 1][j - 1] + 1,
-          matrix[i][j - 1] + 1,
-          matrix[i - 1][j] + 1
-        );
-      }
-    }
-  }
-
-  return matrix[second.length][first.length];
+  return String(
+    value || ""
+  )
+    .toLowerCase()
+    .replace(
+      /&/g,
+      " and "
+    )
+    .replace(
+      /[^a-z0-9\u0600-\u06ff]+/gi,
+      " "
+    )
+    .replace(
+      /\s+/g,
+      " "
+    )
+    .trim();
 }
